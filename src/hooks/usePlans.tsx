@@ -25,6 +25,15 @@ export function usePlans() {
   const fetchPlans = async () => {
     try {
       setLoading(true);
+      
+      // First, try to get the current user to ensure we're authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user found');
+        setPlans([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('plans')
         .select(`
@@ -39,15 +48,21 @@ export function usePlans() {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error fetching plans:', error);
+        throw error;
+      }
+      
+      console.log('Successfully fetched plans:', data?.length || 0);
       setPlans(data || []);
     } catch (error) {
       console.error('Error fetching plans:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch training plans",
+        description: "Failed to fetch training plans. Please ensure you have the required permissions.",
         variant: "destructive",
       });
+      setPlans([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -55,26 +70,6 @@ export function usePlans() {
 
   const createPlan = async (planData: PlanInsert & { employee_ids?: string[] }) => {
     try {
-      // Debug: Check current user and role
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('Creating plan - Current user:', user?.email);
-      
-      if (user) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
-        console.log('Creating plan - User role:', roleData?.role);
-        
-        const { data: employeeData } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('auth_user_id', user.id)
-          .single();
-        console.log('Creating plan - Employee data:', employeeData);
-      }
-
       const { employee_ids, ...planInsertData } = planData;
       
       // Add created_by if we have employee profile
@@ -82,8 +77,6 @@ export function usePlans() {
         ...planInsertData,
         created_by: employeeProfile?.id || null,
       };
-
-      console.log('Creating plan - Insert data:', insertData);
 
       const { data, error } = await supabase
         .from('plans')
