@@ -115,13 +115,13 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
               <Label htmlFor="department_id">Department</Label>
               <Select
                 value={formData.department_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, department_id: value }))}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, department_id: value === "all" ? "" : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Departments</SelectItem>
+                  <SelectItem value="all">All Departments</SelectItem>
                   {departments.map(dept => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -159,14 +159,14 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
             <div>
               <Label htmlFor="quarter">Quarter (Optional)</Label>
               <Select
-                value={formData.quarter?.toString() || ''}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, quarter: value ? parseInt(value) : null }))}
+                value={formData.quarter?.toString() || "none"}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, quarter: value === "none" ? null : parseInt(value) }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select quarter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No specific quarter</SelectItem>
+                  <SelectItem value="none">No specific quarter</SelectItem>
                   <SelectItem value="1">Q1</SelectItem>
                   <SelectItem value="2">Q2</SelectItem>
                   <SelectItem value="3">Q3</SelectItem>
