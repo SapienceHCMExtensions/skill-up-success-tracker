@@ -37,6 +37,20 @@ export function useCourses() {
 
   const createCourse = async (courseData: CourseInsert) => {
     try {
+      // Debug: Check current authentication state
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      // Debug: Check user role
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        console.log('User role:', roleData?.role);
+      }
+
       const { data, error } = await supabase
         .from('courses')
         .insert(courseData)
@@ -56,7 +70,7 @@ export function useCourses() {
       console.error('Error creating course:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create course",
+        description: error.message || "Failed to create course. You need admin or manager role to create courses.",
         variant: "destructive",
       });
       return { data: null, error };
