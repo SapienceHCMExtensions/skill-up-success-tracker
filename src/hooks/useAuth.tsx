@@ -25,16 +25,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Check for existing session first
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('Initial session check:', session, 'User:', session?.user?.email, 'Error:', error);
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Fetch user role and profile
+            try {
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .single();
+              
+              const { data: profileData } = await supabase
+                .from('employees')
+                .select('*')
+                .eq('auth_user_id', session.user.id)
+                .single();
+              
+              if (mounted) {
+                setUserRole(roleData?.role || 'employee');
+                setEmployeeProfile(profileData);
+              }
+            } catch (error) {
+              console.error('Error fetching user data:', error);
+            }
+          }
+          
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, 'Session:', session, 'User:', session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Fetch user role and profile
-          setTimeout(async () => {
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Fetch user role and profile
             try {
               const { data: roleData } = await supabase
                 .from('user_roles')
@@ -53,27 +100,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } catch (error) {
               console.error('Error fetching user data:', error);
             }
-          }, 0);
-        } else {
-          setUserRole(null);
-          setEmployeeProfile(null);
+          } else {
+            setUserRole(null);
+            setEmployeeProfile(null);
+          }
+          
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session, 'User:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (!session) {
-        setLoading(false);
-      }
-    });
+    // Initialize auth
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name?: string) => {
