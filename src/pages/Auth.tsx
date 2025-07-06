@@ -41,6 +41,10 @@ export default function Auth() {
       if (isLogin) {
         const result = await signIn(email, password);
         console.log('Sign in result:', result);
+        if (!result.error) {
+          // Force redirect after successful login
+          window.location.href = '/';
+        }
       } else {
         const result = await signUp(email, password, name);
         console.log('Sign up result:', result);
