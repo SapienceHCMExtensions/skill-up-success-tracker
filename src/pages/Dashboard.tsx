@@ -11,6 +11,7 @@ import {
   Clock,
   DollarSign
 } from "lucide-react"
+import { SessionDialog } from "@/components/training/SessionDialog"
 
 export default function Dashboard() {
   // Mock data - in real app this would come from your database
@@ -47,10 +48,14 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-foreground">Training Dashboard</h1>
           <p className="text-muted-foreground mt-1">Overview of your training programs and employee progress</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary-hover shadow-primary">
-          <Calendar className="w-4 h-4 mr-2" />
-          Schedule Training
-        </Button>
+        <SessionDialog
+          trigger={
+            <Button className="bg-gradient-primary hover:bg-primary-hover shadow-primary">
+              <Calendar className="w-4 h-4 mr-2" />
+              Schedule Training
+            </Button>
+          }
+        />
       </div>
 
       {/* Key Metrics */}
