@@ -36,7 +36,7 @@ export function useScorecards() {
         .from('employees')
         .select(`
           *,
-          department:departments(*),
+          department:departments!fk_employee_department(*),
           certificates:employee_certificates(*),
           enrollments:session_enrollments(*)
         `)
