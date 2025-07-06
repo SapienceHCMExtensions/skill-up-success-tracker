@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TrainingLayout } from "@/components/TrainingLayout";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Plans from "./pages/Plans";
@@ -11,29 +13,33 @@ import Scorecards from "./pages/Scorecards";
 import Evaluations from "./pages/Evaluations";
 import Costs from "./pages/Costs";
 import Alerts from "./pages/Alerts";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<TrainingLayout><Dashboard /></TrainingLayout>} />
-          <Route path="/courses" element={<TrainingLayout><Courses /></TrainingLayout>} />
-          <Route path="/plans" element={<TrainingLayout><Plans /></TrainingLayout>} />
-          <Route path="/scorecards" element={<TrainingLayout><Scorecards /></TrainingLayout>} />
-          <Route path="/evaluations" element={<TrainingLayout><Evaluations /></TrainingLayout>} />
-          <Route path="/costs" element={<TrainingLayout><Costs /></TrainingLayout>} />
-          <Route path="/alerts" element={<TrainingLayout><Alerts /></TrainingLayout>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<ProtectedRoute><TrainingLayout><Dashboard /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/courses" element={<ProtectedRoute><TrainingLayout><Courses /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/plans" element={<ProtectedRoute><TrainingLayout><Plans /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/scorecards" element={<ProtectedRoute><TrainingLayout><Scorecards /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/evaluations" element={<ProtectedRoute><TrainingLayout><Evaluations /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/costs" element={<ProtectedRoute><TrainingLayout><Costs /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/alerts" element={<ProtectedRoute><TrainingLayout><Alerts /></TrainingLayout></ProtectedRoute>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

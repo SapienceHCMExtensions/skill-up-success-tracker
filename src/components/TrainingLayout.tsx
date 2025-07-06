@@ -1,11 +1,16 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { TrainingSidebar } from "@/components/TrainingSidebar"
+import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import { LogOut } from "lucide-react"
 
 interface TrainingLayoutProps {
   children: React.ReactNode
 }
 
 export function TrainingLayout({ children }: TrainingLayoutProps) {
+  const { employeeProfile, signOut, userRole } = useAuth();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-dashboard">
@@ -20,8 +25,11 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-sm text-muted-foreground">
-                  Welcome, Training Manager
+                  Welcome, {employeeProfile?.name || 'User'} ({userRole})
                 </div>
+                <Button variant="ghost" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </header>
