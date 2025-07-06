@@ -12,95 +12,25 @@ import {
   Clock,
   DollarSign,
   Award,
-  Users
+  Users,
+  Edit,
+  UserPlus
 } from "lucide-react"
+import { useCourses } from "@/hooks/useCourses"
+import { CourseDialog } from "@/components/courses/CourseDialog"
+import { AssignTrainingDialog } from "@/components/courses/AssignTrainingDialog"
 
 export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterProvider, setFilterProvider] = useState("all")
-
-  // Mock course data
-  const courses = [
-    {
-      id: 1,
-      code: "SF-101",
-      title: "Workplace Safety Fundamentals",
-      description: "Essential safety protocols and emergency procedures for all employees.",
-      provider: "internal",
-      competencies: ["Safety", "Emergency Response", "Risk Assessment"],
-      duration: 8,
-      cost: 150,
-      certificateValidity: 24,
-      enrolledCount: 245
-    },
-    {
-      id: 2,
-      code: "LD-201",
-      title: "Leadership Development Program",
-      description: "Comprehensive leadership skills training for managers and supervisors.",
-      provider: "external",
-      competencies: ["Leadership", "Communication", "Team Management"],
-      duration: 24,
-      cost: 850,
-      certificateValidity: 36,
-      enrolledCount: 67
-    },
-    {
-      id: 3,
-      code: "IT-301",
-      title: "Cybersecurity Awareness",
-      description: "Essential cybersecurity training covering threats, best practices, and compliance.",
-      provider: "internal",
-      competencies: ["Cybersecurity", "Data Protection", "Compliance"],
-      duration: 4,
-      cost: 75,
-      certificateValidity: 12,
-      enrolledCount: 892
-    },
-    {
-      id: 4,
-      code: "HR-401",
-      title: "Diversity & Inclusion Workshop",
-      description: "Building inclusive workplace culture and understanding unconscious bias.",
-      provider: "external",
-      competencies: ["Diversity", "Inclusion", "Cultural Awareness"],
-      duration: 6,
-      cost: 200,
-      certificateValidity: 24,
-      enrolledCount: 156
-    },
-    {
-      id: 5,
-      code: "PM-501",
-      title: "Project Management Essentials",
-      description: "Fundamental project management methodologies and tools.",
-      provider: "internal",
-      competencies: ["Project Management", "Planning", "Execution"],
-      duration: 16,
-      cost: 450,
-      certificateValidity: 36,
-      enrolledCount: 89
-    },
-    {
-      id: 6,
-      code: "CS-601",
-      title: "Customer Service Excellence",
-      description: "Advanced techniques for delivering exceptional customer experiences.",
-      provider: "external",
-      competencies: ["Customer Service", "Communication", "Problem Solving"],
-      duration: 12,
-      cost: 300,
-      certificateValidity: 24,
-      enrolledCount: 234
-    }
-  ]
+  const { courses, loading } = useCourses()
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         course.competencies.some(comp => comp.toLowerCase().includes(searchQuery.toLowerCase()))
+                         (course.competencies && course.competencies.some(comp => comp.toLowerCase().includes(searchQuery.toLowerCase())))
     
-    const matchesProvider = filterProvider === "all" || course.provider === filterProvider
+    const matchesProvider = filterProvider === "all" || course.provider_type === filterProvider
     
     return matchesSearch && matchesProvider
   })
@@ -119,10 +49,14 @@ export default function Courses() {
           <h1 className="text-3xl font-bold text-foreground">Course Catalog</h1>
           <p className="text-muted-foreground mt-1">Manage and organize all available training courses</p>
         </div>
-        <Button className="bg-gradient-primary hover:bg-primary-hover shadow-primary">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Course
-        </Button>
+        <CourseDialog
+          trigger={
+            <Button className="bg-gradient-primary hover:bg-primary-hover shadow-primary">
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Course
+            </Button>
+          }
+        />
       </div>
 
       {/* Filters */}
@@ -153,9 +87,17 @@ export default function Courses() {
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      )}
+
       {/* Course Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCourses.map((course) => (
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCourses.map((course) => (
           <Card key={course.id} className="shadow-card hover:shadow-hover transition-all cursor-pointer group">
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
@@ -164,7 +106,7 @@ export default function Courses() {
                     <Badge variant="outline" className="text-xs font-mono">
                       {course.code}
                     </Badge>
-                    {getProviderBadge(course.provider)}
+                    {getProviderBadge(course.provider_type)}
                   </div>
                   <CardTitle className="text-lg group-hover:text-primary transition-colors">
                     {course.title}
@@ -173,7 +115,7 @@ export default function Courses() {
                 <BookOpen className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
               </div>
               <CardDescription className="text-sm leading-relaxed">
-                {course.description}
+                {course.description || 'No description available'}
               </CardDescription>
             </CardHeader>
             
@@ -182,11 +124,15 @@ export default function Courses() {
               <div>
                 <div className="text-xs font-medium text-muted-foreground mb-2">COMPETENCIES</div>
                 <div className="flex flex-wrap gap-1">
-                  {course.competencies.map((comp, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {comp}
-                    </Badge>
-                  ))}
+                  {course.competencies && course.competencies.length > 0 ? (
+                    course.competencies.map((comp, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        {comp}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No competencies defined</span>
+                  )}
                 </div>
               </div>
 
@@ -194,38 +140,51 @@ export default function Courses() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{course.duration}h</span>
+                  <span>{course.duration_hours}h</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
-                  <span>${course.cost}</span>
+                  <span>${course.default_cost || 0}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-muted-foreground" />
-                  <span>{course.certificateValidity}mo cert</span>
+                  <span>{course.certificate_validity_months || 0}mo cert</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-muted-foreground" />
-                  <span>{course.enrolledCount} enrolled</span>
+                  <span>0 enrolled</span>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Edit Course
-                </Button>
-                <Button size="sm" className="flex-1 bg-gradient-primary hover:bg-primary-hover">
-                  Assign Training
-                </Button>
+                <CourseDialog
+                  course={course}
+                  trigger={
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                  }
+                />
+                <AssignTrainingDialog
+                  course={course}
+                  trigger={
+                    <Button size="sm" className="flex-1 bg-gradient-primary hover:bg-primary-hover">
+                      <UserPlus className="w-3 h-3 mr-1" />
+                      Assign
+                    </Button>
+                  }
+                />
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* No Results */}
-      {filteredCourses.length === 0 && (
+      {!loading && filteredCourses.length === 0 && (
         <Card className="shadow-card">
           <CardContent className="py-12 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
