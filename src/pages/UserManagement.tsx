@@ -162,7 +162,7 @@ export default function UserManagement() {
         </TabsContent>
 
         <TabsContent value="import" className="space-y-4">
-          <CsvImport />
+          <CsvImport onImportComplete={handleImportComplete} />
         </TabsContent>
       </Tabs>
     </div>

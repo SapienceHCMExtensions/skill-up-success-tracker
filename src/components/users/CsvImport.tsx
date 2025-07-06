@@ -24,7 +24,11 @@ interface ImportResult {
   errors: Array<{ row: number; message: string; data: CsvRow }>;
 }
 
-export function CsvImport() {
+interface CsvImportProps {
+  onImportComplete?: () => void;
+}
+
+export function CsvImport({ onImportComplete }: CsvImportProps) {
   const [file, setFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<CsvRow[]>([]);
   const [importing, setImporting] = useState(false);
@@ -78,11 +82,20 @@ export function CsvImport() {
     return null;
   };
 
+  const [importLogs, setImportLogs] = useState<string[]>([]);
+
+  const addLog = (message: string) => {
+    console.log(message);
+    setImportLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+  };
+
   const importData = async () => {
     if (!csvData.length) return;
 
     setImporting(true);
     setProgress(0);
+    setImportLogs([]);
+    addLog('Starting CSV import process...');
 
     const errors: ImportResult['errors'] = [];
     let successCount = 0;
@@ -90,8 +103,11 @@ export function CsvImport() {
     // First, get or create departments
     const departments = [...new Set(csvData.filter(row => row.department).map(row => row.department))];
     const departmentMap = new Map<string, string>();
+    
+    addLog(`Found ${departments.length} unique departments to process`);
 
     for (const deptName of departments) {
+      addLog(`Processing department: ${deptName}`);
       const { data: existingDept } = await supabase
         .from('departments')
         .select('id, name')
@@ -99,8 +115,10 @@ export function CsvImport() {
         .single();
 
       if (existingDept) {
+        addLog(`Department "${deptName}" already exists`);
         departmentMap.set(deptName, existingDept.id);
       } else {
+        addLog(`Creating new department: ${deptName}`);
         const { data: newDept, error } = await supabase
           .from('departments')
           .insert({ name: deptName })
@@ -108,7 +126,10 @@ export function CsvImport() {
           .single();
 
         if (newDept && !error) {
+          addLog(`Successfully created department: ${deptName}`);
           departmentMap.set(deptName, newDept.id);
+        } else {
+          addLog(`Failed to create department ${deptName}: ${error?.message}`);
         }
       }
     }
@@ -133,20 +154,25 @@ export function CsvImport() {
         const userExists = !!existingEmployee;
 
         if (!userExists) {
-          // Create auth user
-          const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-            email: row.email,
-            password: 'TempPassword123!', // Temporary password
-            email_confirm: true,
-            user_metadata: { name: row.name }
+          addLog(`Creating user: ${row.name} (${row.email})`);
+          
+          // Use edge function to create user with admin privileges
+          const { data: authUser, error: authError } = await supabase.functions.invoke('create-user', {
+            body: {
+              email: row.email,
+              password: 'TempPassword123!',
+              name: row.name
+            }
           });
 
           if (authError) {
+            addLog(`Failed to create user ${row.email}: ${authError.message}`);
             errors.push({ row: i + 1, message: authError.message, data: row });
             continue;
           }
 
-          if (authUser.user) {
+          if (authUser?.user) {
+            addLog(`Creating employee record for: ${row.name}`);
             // Create employee record
             const { error: employeeError } = await supabase
               .from('employees')
@@ -158,12 +184,14 @@ export function CsvImport() {
               });
 
             if (employeeError) {
+              addLog(`Failed to create employee record: ${employeeError.message}`);
               errors.push({ row: i + 1, message: employeeError.message, data: row });
               continue;
             }
 
             // Create user role
             const role = row.role || 'employee';
+            addLog(`Assigning role "${role}" to: ${row.name}`);
             const { error: roleError } = await supabase
               .from('user_roles')
               .insert({
@@ -172,11 +200,15 @@ export function CsvImport() {
               });
 
             if (roleError) {
+              addLog(`Failed to assign role: ${roleError.message}`);
               errors.push({ row: i + 1, message: roleError.message, data: row });
               continue;
             }
+            
+            addLog(`Successfully created user: ${row.name}`);
           }
         } else {
+          addLog(`User already exists: ${row.email}`);
           errors.push({ row: i + 1, message: 'User with this email already exists', data: row });
           continue;
         }
@@ -195,6 +227,11 @@ export function CsvImport() {
 
     setResult({ success: successCount, errors });
     setImporting(false);
+
+    // Call completion callback to refresh the user list
+    if (onImportComplete) {
+      onImportComplete();
+    }
 
     toast({
       title: "Import completed",
@@ -321,6 +358,26 @@ export function CsvImport() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {importLogs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Import Logs
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-md max-h-60 overflow-y-auto">
+              <div className="space-y-1 text-sm font-mono">
+                {importLogs.map((log, index) => (
+                  <div key={index}>{log}</div>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
