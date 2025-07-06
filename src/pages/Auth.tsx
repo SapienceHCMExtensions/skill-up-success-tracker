@@ -8,24 +8,45 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('kannan.srinivasan.at@outlook.com'); // Pre-fill for testing
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, loading: authLoading } = useAuth();
+
+  console.log('Auth page render - user:', user, 'authLoading:', authLoading);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-dashboard">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (user) {
+    console.log('User exists, should redirect:', user.email);
     return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    console.log('Attempting login with:', email);
 
-    if (isLogin) {
-      await signIn(email, password);
-    } else {
-      await signUp(email, password, name);
+    try {
+      if (isLogin) {
+        const result = await signIn(email, password);
+        console.log('Sign in result:', result);
+      } else {
+        const result = await signUp(email, password, name);
+        console.log('Sign up result:', result);
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
     }
 
     setLoading(false);
