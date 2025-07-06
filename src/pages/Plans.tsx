@@ -2,7 +2,8 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp, Edit, Trash2 } from "lucide-react"
 import { usePlans } from "@/hooks/usePlans"
 import { PlanDialog } from "@/components/plans/PlanDialog"
 import { PlanDetailsDialog } from "@/components/plans/PlanDetailsDialog"
@@ -10,7 +11,7 @@ import { PlanCalendar } from "@/components/plans/PlanCalendar"
 import { supabase } from "@/integrations/supabase/client"
 
 export default function Plans() {
-  const { plans, loading } = usePlans();
+  const { plans, loading, deletePlan } = usePlans();
   const [showCalendar, setShowCalendar] = useState(false);
 
   // Debug: Log user role and plans data
@@ -51,11 +52,18 @@ export default function Plans() {
     return <Badge variant="secondary">Scheduled</Badge>;
   }
 
-  const calculateCompletionRate = (plan: any) => {
-    if (!plan.plan_employees || plan.plan_employees.length === 0) return 0;
-    // For now, return a simple calculation
-    return Math.round(Math.random() * 100); // TODO: Calculate based on actual completion data
-  }
+  const handleDeletePlan = async (planId: string) => {
+    if (confirm('Are you sure you want to delete this training plan?')) {
+      await deletePlan(planId);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,127 +96,85 @@ export default function Plans() {
         </div>
       )}
 
-      {/* Training Plans Grid */}
-      {!loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {plans.map((plan) => (
-          <Card key={plan.id} className="shadow-card hover:shadow-hover transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg mb-2">{plan.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      {plan.department?.name || 'All Departments'}
-                    </span>
-                    <span>{plan.year} {plan.quarter && `Q${plan.quarter}`}</span>
-                  </CardDescription>
-                </div>
-                {getStatusBadge(plan)}
-              </div>
-            </CardHeader>
-            
-            <CardContent className="space-y-4">
-              {/* Progress Overview */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-3 bg-accent/30 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
-                    {calculateCompletionRate(plan)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">Completion Rate</div>
-                </div>
-                <div className="text-center p-3 bg-accent/30 rounded-lg">
-                  <div className="text-2xl font-bold">
-                    {plan.plan_employees?.length || 0}
-                  </div>
-                  <div className="text-xs text-muted-foreground">Assigned Employees</div>
-                </div>
-              </div>
-
-              {/* Cost Information */}
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Budget</span>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">
-                    ${(plan.actual_cost || plan.estimated_cost || 0).toLocaleString()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {plan.actual_cost ? 'Actual' : 'Estimated'}
-                  </div>
-                  {plan.actual_cost && plan.estimated_cost && (
-                    <div className={`text-xs ${plan.actual_cost > plan.estimated_cost ? 'text-destructive' : 'text-success'}`}>
-                      {plan.actual_cost > plan.estimated_cost ? '+' : '-'}
-                      ${Math.abs(plan.actual_cost - plan.estimated_cost).toLocaleString()} variance
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Upcoming Sessions */}
-              <div>
-                <div className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  Scheduled Sessions
-                </div>
-                <div className="space-y-2">
-                  {plan.sessions && plan.sessions.length > 0 ? (
-                    <>
-                      {plan.sessions.slice(0, 2).map((session, index) => (
-                        <div key={session.id || index} className="flex items-center justify-between p-2 bg-accent/20 rounded text-sm">
-                          <div>
-                            <div className="font-medium">{session.title}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(session.start_date).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <div className="text-xs">
-                            {session.location || 'TBD'}
-                          </div>
-                        </div>
-                      ))}
-                      {plan.sessions.length > 2 && (
-                        <div className="text-xs text-muted-foreground text-center py-1">
-                          +{plan.sessions.length - 2} more sessions
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-xs text-muted-foreground text-center py-2">
-                      No sessions scheduled yet
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <PlanDetailsDialog
-                  plan={plan}
-                  trigger={
-                    <Button variant="outline" size="sm" className="flex-1">
-                      <Eye className="w-3 h-3 mr-1" />
-                      View Details
-                    </Button>
-                  }
-                />
-                <PlanDialog
-                  plan={plan}
-                  trigger={
-                    <Button size="sm" className="flex-1">
-                      <Settings className="w-3 h-3 mr-1" />
-                      Manage
-                    </Button>
-                  }
-                />
-              </div>
-            </CardContent>
-            </Card>
-          ))}
-        </div>
+      {/* Training Plans Table */}
+      {!loading && plans.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>Training Plans</CardTitle>
+            <CardDescription>Manage and track your training plans</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Plan Name</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Budget</TableHead>
+                  <TableHead>Assigned</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {plans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="font-medium">{plan.name}</TableCell>
+                    <TableCell>{plan.department?.name || 'All Departments'}</TableCell>
+                    <TableCell>
+                      {plan.year} {plan.quarter && `Q${plan.quarter}`}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {formatCurrency(plan.actual_cost || plan.estimated_cost || 0)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {plan.actual_cost ? 'Actual' : 'Estimated'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-4 h-4" />
+                        <span>{plan.plan_employees?.length || 0}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(plan)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <PlanDetailsDialog
+                          plan={plan}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                        <PlanDialog
+                          plan={plan}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeletePlan(plan.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* No Plans State */}

@@ -34,19 +34,19 @@ export function usePlans() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('plans')
-        .select(`
+    const { data, error } = await supabase
+      .from('plans')
+      .select(`
+        *,
+        department:departments(*),
+        created_by_employee:employees!plans_created_by_fkey(*),
+        sessions(*),
+        plan_employees(
           *,
-          department:departments(*),
-          created_by_employee:employees!plans_created_by_fkey(*),
-          sessions(*),
-          plan_employees(
-            *,
-            employee:employees(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
+          employee:employees!plan_employees_employee_id_fkey(*)
+        )
+      `)
+      .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Supabase error fetching plans:', error);
@@ -88,7 +88,7 @@ export function usePlans() {
           sessions(*),
           plan_employees(
             *,
-            employee:employees(*)
+            employee:employees!plan_employees_employee_id_fkey(*)
           )
         `)
         .single();
@@ -123,7 +123,7 @@ export function usePlans() {
           sessions(*),
           plan_employees(
             *,
-            employee:employees(*)
+            employee:employees!plan_employees_employee_id_fkey(*)
           )
         `)
         .eq('id', data.id)
@@ -160,7 +160,7 @@ export function usePlans() {
           sessions(*),
           plan_employees(
             *,
-            employee:employees(*)
+            employee:employees!plan_employees_employee_id_fkey(*)
           )
         `)
         .single();
