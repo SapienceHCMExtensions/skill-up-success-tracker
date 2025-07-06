@@ -35,7 +35,7 @@ export default function UserManagement() {
         .from('employees')
         .select(`
           *,
-          department:departments(*)
+          department:departments!fk_employee_department(*)
         `)
         .order('created_at', { ascending: false });
 
