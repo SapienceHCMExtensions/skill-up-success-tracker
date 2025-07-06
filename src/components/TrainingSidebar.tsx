@@ -5,7 +5,8 @@ import {
   BarChart3, 
   DollarSign, 
   Bell,
-  GraduationCap
+  GraduationCap,
+  Settings
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -27,6 +28,7 @@ const navigationItems = [
   { title: "Evaluations", url: "/evaluations", icon: GraduationCap },
   { title: "Cost Management", url: "/costs", icon: DollarSign },
   { title: "Certificate Alerts", url: "/alerts", icon: Bell },
+  { title: "User Management", url: "/users", icon: Settings },
 ]
 
 export function TrainingSidebar() {
