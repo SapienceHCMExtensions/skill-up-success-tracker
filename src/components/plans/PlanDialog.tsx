@@ -33,12 +33,17 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
 
   const fetchDepartments = async () => {
     try {
+      console.log('Fetching departments...');
       const { data, error } = await supabase
         .from('departments')
         .select('*')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Department fetch error:', error);
+        throw error;
+      }
+      console.log('Departments fetched:', data);
       setDepartments(data || []);
     } catch (error) {
       console.error('Error fetching departments:', error);
@@ -78,6 +83,8 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
       fetchDepartments();
     }
   }, [open]);
+
+  console.log('PlanDialog render - open:', open, 'departments:', departments.length);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
