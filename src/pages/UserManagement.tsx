@@ -21,6 +21,16 @@ export default function UserManagement() {
 
   const fetchEmployees = async () => {
     try {
+      // Check authentication status first
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      if (!user) {
+        console.log('User not authenticated - cannot fetch employees');
+        setEmployees([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('employees')
         .select(`
@@ -29,6 +39,7 @@ export default function UserManagement() {
         `)
         .order('created_at', { ascending: false });
 
+      console.log('Employees query result:', { data, error });
       if (error) throw error;
 
       // Get user roles separately to avoid complex joins
