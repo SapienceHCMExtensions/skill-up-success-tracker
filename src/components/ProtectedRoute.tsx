@@ -8,10 +8,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
-  console.log('ProtectedRoute - loading:', loading, 'user:', user);
-
   if (loading) {
-    console.log('ProtectedRoute - Still loading');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-dashboard">
         <div className="text-center">
@@ -23,10 +20,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    console.log('ProtectedRoute - No user, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
 
-  console.log('ProtectedRoute - User exists, showing protected content');
   return <>{children}</>;
 }

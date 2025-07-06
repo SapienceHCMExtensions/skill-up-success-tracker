@@ -25,98 +25,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    let mounted = true;
-
-    const initializeAuth = async () => {
-      try {
-        // Check for existing session first
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('Initial session check:', session, 'User:', session?.user?.email, 'Error:', error);
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setSession(session);
+        setUser(session.user);
         
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // Fetch user role and profile
-            try {
-              const { data: roleData } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', session.user.id)
-                .single();
-              
-              const { data: profileData } = await supabase
-                .from('employees')
-                .select('*')
-                .eq('auth_user_id', session.user.id)
-                .single();
-              
-              if (mounted) {
-                setUserRole(roleData?.role || 'employee');
-                setEmployeeProfile(profileData);
-              }
-            } catch (error) {
-              console.error('Error fetching user data:', error);
-            }
-          }
-          
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (mounted) {
-          setLoading(false);
-        }
+        // Get user role and profile
+        const [roleResult, profileResult] = await Promise.all([
+          supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
+          supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
+        ]);
+        
+        setUserRole(roleResult.data?.role || 'employee');
+        setEmployeeProfile(profileResult.data);
       }
+      
+      setLoading(false);
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, 'Session:', session, 'User:', session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
         
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
+        if (session?.user) {
+          const [roleResult, profileResult] = await Promise.all([
+            supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
+            supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
+          ]);
           
-          if (session?.user) {
-            // Fetch user role and profile
-            try {
-              const { data: roleData } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', session.user.id)
-                .single();
-              
-              const { data: profileData } = await supabase
-                .from('employees')
-                .select('*')
-                .eq('auth_user_id', session.user.id)
-                .single();
-              
-              setUserRole(roleData?.role || 'employee');
-              setEmployeeProfile(profileData);
-            } catch (error) {
-              console.error('Error fetching user data:', error);
-            }
-          } else {
-            setUserRole(null);
-            setEmployeeProfile(null);
-          }
-          
-          setLoading(false);
+          setUserRole(roleResult.data?.role || 'employee');
+          setEmployeeProfile(profileResult.data);
+        } else {
+          setUserRole(null);
+          setEmployeeProfile(null);
         }
+        
+        setLoading(false);
       }
     );
 
-    // Initialize auth
-    initializeAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    initAuth();
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, name?: string) => {

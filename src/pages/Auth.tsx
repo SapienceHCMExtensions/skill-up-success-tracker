@@ -14,10 +14,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const { user, signIn, signUp } = useAuth();
 
-  console.log('Auth page - user state:', user);
-
   if (user) {
-    console.log('Auth page - User exists, redirecting to home');
     return <Navigate to="/" replace />;
   }
 
