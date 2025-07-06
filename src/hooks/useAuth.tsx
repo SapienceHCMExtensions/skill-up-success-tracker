@@ -25,49 +25,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Use setTimeout to prevent potential auth loop
+          setTimeout(async () => {
+            const [roleResult, profileResult] = await Promise.all([
+              supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
+              supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
+            ]);
+            
+            setUserRole(roleResult.data?.role || 'employee');
+            setEmployeeProfile(profileResult.data);
+            setLoading(false);
+          }, 0);
+        } else {
+          setUserRole(null);
+          setEmployeeProfile(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.email);
       if (session) {
         setSession(session);
         setUser(session.user);
         
         // Get user role and profile
-        const [roleResult, profileResult] = await Promise.all([
+        Promise.all([
           supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
           supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
-        ]);
-        
-        setUserRole(roleResult.data?.role || 'employee');
-        setEmployeeProfile(profileResult.data);
-      }
-      
-      setLoading(false);
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          const [roleResult, profileResult] = await Promise.all([
-            supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
-            supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
-          ]);
-          
+        ]).then(([roleResult, profileResult]) => {
           setUserRole(roleResult.data?.role || 'employee');
           setEmployeeProfile(profileResult.data);
-        } else {
-          setUserRole(null);
-          setEmployeeProfile(null);
-        }
-        
+          setLoading(false);
+        });
+      } else {
         setLoading(false);
       }
-    );
+    });
 
-    initAuth();
     return () => subscription.unsubscribe();
   }, []);
 
