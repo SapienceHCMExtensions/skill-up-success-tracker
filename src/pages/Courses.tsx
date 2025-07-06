@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Toggle } from "@/components/ui/toggle"
 import { 
   BookOpen, 
   Plus, 
@@ -16,7 +18,9 @@ import {
   Edit,
   UserPlus,
   Eye,
-  Trash2
+  Trash2,
+  Grid3X3,
+  List
 } from "lucide-react"
 import { useCourses } from "@/hooks/useCourses"
 import { CourseDialog } from "@/components/courses/CourseDialog"
@@ -27,6 +31,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterProvider, setFilterProvider] = useState("all")
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards")
   const { courses, loading, deleteCourse } = useCourses()
 
   const filteredCourses = courses.filter(course => {
@@ -87,6 +92,24 @@ export default function Courses() {
                 <SelectItem value="external">External</SelectItem>
               </SelectContent>
             </Select>
+            <div className="flex gap-1 border rounded-lg p-1">
+              <Toggle
+                pressed={viewMode === "cards"}
+                onPressedChange={() => setViewMode("cards")}
+                size="sm"
+                aria-label="Card view"
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </Toggle>
+              <Toggle
+                pressed={viewMode === "table"}
+                onPressedChange={() => setViewMode("table")}
+                size="sm"
+                aria-label="Table view"
+              >
+                <List className="w-4 h-4" />
+              </Toggle>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -98,8 +121,8 @@ export default function Courses() {
         </div>
       )}
 
-      {/* Course Grid */}
-      {!loading && (
+      {/* Course Content */}
+      {!loading && viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
           <Card key={course.id} className="shadow-card hover:shadow-hover transition-all cursor-pointer group">
@@ -219,6 +242,121 @@ export default function Courses() {
           </Card>
           ))}
         </div>
+      )}
+
+      {/* Course Table */}
+      {!loading && viewMode === "table" && (
+        <Card className="shadow-card">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Provider</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Cost</TableHead>
+                  <TableHead>Cert Validity</TableHead>
+                  <TableHead>Competencies</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCourses.map((course) => (
+                  <TableRow key={course.id} className="hover:bg-muted/50">
+                    <TableCell className="font-mono text-sm">{course.code}</TableCell>
+                    <TableCell className="max-w-xs">
+                      <div>
+                        <div className="font-medium">{course.title}</div>
+                        {course.description && (
+                          <div className="text-sm text-muted-foreground truncate">
+                            {course.description}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {getProviderBadge(course.provider_type)}
+                    </TableCell>
+                    <TableCell>{course.duration_hours}h</TableCell>
+                    <TableCell>${course.default_cost || 0}</TableCell>
+                    <TableCell>{course.certificate_validity_months || 0}mo</TableCell>
+                    <TableCell className="max-w-xs">
+                      <div className="flex flex-wrap gap-1">
+                        {course.competencies && course.competencies.length > 0 ? (
+                          course.competencies.slice(0, 2).map((comp, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {comp}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-xs text-muted-foreground">None</span>
+                        )}
+                        {course.competencies && course.competencies.length > 2 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{course.competencies.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex gap-1 justify-end">
+                        <CourseViewDialog
+                          course={course}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                        <CourseDialog
+                          course={course}
+                          trigger={
+                            <Button variant="ghost" size="sm">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="hover:bg-destructive/10 hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{course.title}"? This will deactivate the course and it won't be available for new enrollments.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => deleteCourse(course.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <AssignTrainingDialog
+                          course={course}
+                          trigger={
+                            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
+                              <UserPlus className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
       {/* No Results */}
