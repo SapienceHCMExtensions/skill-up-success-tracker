@@ -14,16 +14,20 @@ import {
   Award,
   Users,
   Edit,
-  UserPlus
+  UserPlus,
+  Eye,
+  Trash2
 } from "lucide-react"
 import { useCourses } from "@/hooks/useCourses"
 import { CourseDialog } from "@/components/courses/CourseDialog"
 import { AssignTrainingDialog } from "@/components/courses/AssignTrainingDialog"
+import { CourseViewDialog } from "@/components/courses/CourseViewDialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export default function Courses() {
   const [searchQuery, setSearchQuery] = useState("")
   const [filterProvider, setFilterProvider] = useState("all")
-  const { courses, loading } = useCourses()
+  const { courses, loading, deleteCourse } = useCourses()
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -157,7 +161,16 @@ export default function Courses() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-1 pt-2">
+                <CourseViewDialog
+                  course={course}
+                  trigger={
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Eye className="w-3 h-3 mr-1" />
+                      View
+                    </Button>
+                  }
+                />
                 <CourseDialog
                   course={course}
                   trigger={
@@ -167,6 +180,31 @@ export default function Courses() {
                     </Button>
                   }
                 />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex-1 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50">
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete "{course.title}"? This will deactivate the course and it won't be available for new enrollments.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={() => deleteCourse(course.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
                 <AssignTrainingDialog
                   course={course}
                   trigger={
