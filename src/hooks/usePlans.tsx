@@ -55,6 +55,26 @@ export function usePlans() {
 
   const createPlan = async (planData: PlanInsert & { employee_ids?: string[] }) => {
     try {
+      // Debug: Check current user and role
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Creating plan - Current user:', user?.email);
+      
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        console.log('Creating plan - User role:', roleData?.role);
+        
+        const { data: employeeData } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('auth_user_id', user.id)
+          .single();
+        console.log('Creating plan - Employee data:', employeeData);
+      }
+
       const { employee_ids, ...planInsertData } = planData;
       
       // Add created_by if we have employee profile
@@ -62,6 +82,8 @@ export function usePlans() {
         ...planInsertData,
         created_by: employeeProfile?.id || null,
       };
+
+      console.log('Creating plan - Insert data:', insertData);
 
       const { data, error } = await supabase
         .from('plans')
@@ -78,7 +100,10 @@ export function usePlans() {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Plan creation error:', error);
+        throw error;
+      }
 
       // Add employees to plan if provided
       if (employee_ids && employee_ids.length > 0) {
