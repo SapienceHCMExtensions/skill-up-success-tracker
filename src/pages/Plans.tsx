@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -7,10 +7,28 @@ import { usePlans } from "@/hooks/usePlans"
 import { PlanDialog } from "@/components/plans/PlanDialog"
 import { PlanDetailsDialog } from "@/components/plans/PlanDetailsDialog"
 import { PlanCalendar } from "@/components/plans/PlanCalendar"
+import { supabase } from "@/integrations/supabase/client"
 
 export default function Plans() {
   const { plans, loading } = usePlans();
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // Debug: Log user role and plans data
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        console.log('Current user role:', roleData?.role);
+        console.log('Plans loaded:', plans.length);
+      }
+    };
+    checkUserRole();
+  }, [plans]);
 
   const getStatusBadge = (plan: any) => {
     // Simple status logic based on current date and sessions
