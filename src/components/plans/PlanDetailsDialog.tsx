@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Users, Calendar, DollarSign, Clock, BookOpen, TrendingUp, AlertCircle, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { AssignEmployeesDialog } from './AssignEmployeesDialog';
+import { SessionDialog } from '@/components/training/SessionDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Plan = Tables<'plans'> & {
@@ -217,11 +218,22 @@ export function PlanDetailsDialog({ plan, trigger }: PlanDetailsDialogProps) {
 
           <TabsContent value="sessions" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>All Sessions</CardTitle>
-                <CardDescription>
-                  Manage all training sessions in this plan
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle>Training Sessions</CardTitle>
+                  <CardDescription>
+                    Manage all training sessions in this plan
+                  </CardDescription>
+                </div>
+                <SessionDialog
+                  planId={plan.id}
+                  trigger={
+                    <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Create Session
+                    </Button>
+                  }
+                />
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -246,6 +258,13 @@ export function PlanDetailsDialog({ plan, trigger }: PlanDetailsDialogProps) {
                       </div>
                     </div>
                   ))}
+                  {sessions.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="w-8 h-8 mx-auto mb-2" />
+                      <p>No sessions created yet</p>
+                      <p className="text-sm">Create your first session to start training</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

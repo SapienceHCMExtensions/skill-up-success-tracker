@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -12,33 +13,102 @@ import {
   DollarSign
 } from "lucide-react"
 import { SessionDialog } from "@/components/training/SessionDialog"
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+import type { Tables } from '@/integrations/supabase/types';
+
+type SessionWithDetails = Tables<'sessions'> & {
+  courses?: Partial<Tables<'courses'>>;
+  employees?: Partial<Tables<'employees'>>;
+  session_enrollments?: Tables<'session_enrollments'>[];
+};
 
 export default function Dashboard() {
-  // Mock data - in real app this would come from your database
-  const stats = {
-    totalEmployees: 1247,
-    activeCourses: 45,
-    upcomingSessions: 12,
-    completionRate: 87,
-    expiringCertificates: 23,
-    completedThisMonth: 156,
-    inProgress: 89,
-    totalBudget: 125000,
-    spentBudget: 89500
-  }
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    activeCourses: 0,
+    upcomingSessions: 0,
+    completionRate: 0,
+    expiringCertificates: 0,
+    completedThisMonth: 0,
+    inProgress: 0,
+    totalBudget: 0,
+    spentBudget: 0
+  });
+  const [upcomingSessions, setUpcomingSessions] = useState<SessionWithDetails[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-  const recentActivity = [
-    { id: 1, type: "completion", employee: "Sarah Johnson", course: "Safety Training 101", date: "2 hours ago" },
-    { id: 2, type: "enrollment", employee: "Mike Chen", course: "Leadership Fundamentals", date: "4 hours ago" },
-    { id: 3, type: "expiring", employee: "Lisa Davis", course: "First Aid Certification", date: "1 day ago" },
-    { id: 4, type: "completion", employee: "James Wilson", course: "Data Protection Training", date: "2 days ago" },
-  ]
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const upcomingSessions = [
-    { id: 1, course: "Advanced Excel Training", date: "Dec 15, 2024", time: "9:00 AM", instructor: "John Smith", enrolled: 15, capacity: 20 },
-    { id: 2, course: "Project Management Basics", date: "Dec 18, 2024", time: "2:00 PM", instructor: "Maria Garcia", enrolled: 12, capacity: 15 },
-    { id: 3, course: "Cybersecurity Awareness", date: "Dec 20, 2024", time: "10:00 AM", instructor: "David Lee", enrolled: 25, capacity: 30 },
-  ]
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch upcoming sessions
+      const { data: sessionsData } = await supabase
+        .from('sessions')
+        .select(`
+          *,
+          courses (title, code),
+          employees:instructor_id (name),
+          session_enrollments (*)
+        `)
+        .gte('start_date', new Date().toISOString())
+        .order('start_date', { ascending: true })
+        .limit(5);
+
+      // Fetch counts for dashboard stats
+      const [
+        { count: employeeCount },
+        { count: courseCount },
+        { count: sessionCount },
+        { count: expiringCount }
+      ] = await Promise.all([
+        supabase.from('employees').select('*', { count: 'exact', head: true }),
+        supabase.from('courses').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabase.from('sessions').select('*', { count: 'exact', head: true }).gte('start_date', new Date().toISOString()),
+        supabase.from('employee_certificates').select('*', { count: 'exact', head: true }).lte('expiry_date', new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
+      ]);
+
+      // Fetch enrollment stats
+      const { data: enrollmentStats } = await supabase
+        .from('session_enrollments')
+        .select('status, created_at')
+        .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
+
+      const completedThisMonth = enrollmentStats?.filter(e => e.status === 'completed').length || 0;
+      const inProgress = enrollmentStats?.filter(e => e.status === 'in_progress').length || 0;
+      const totalEnrollments = enrollmentStats?.length || 0;
+      const completionRate = totalEnrollments > 0 ? Math.round((completedThisMonth / totalEnrollments) * 100) : 0;
+
+      setStats({
+        totalEmployees: employeeCount || 0,
+        activeCourses: courseCount || 0,
+        upcomingSessions: sessionCount || 0,
+        completionRate,
+        expiringCertificates: expiringCount || 0,
+        completedThisMonth,
+        inProgress,
+        totalBudget: 125000, // These could come from plans table
+        spentBudget: 89500
+      });
+
+      setUpcomingSessions(sessionsData as any || []);
+
+      // Mock recent activity for now - could be enhanced with real data
+      setRecentActivity([
+        { id: 1, type: "completion", employee: "Recent Activity", course: "Check Sessions page", date: "Live data" },
+        { id: 2, type: "enrollment", employee: "Real stats", course: "From database", date: "Updated" },
+      ]);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -192,25 +262,63 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {upcomingSessions.map((session) => (
-              <div key={session.id} className="flex items-center justify-between p-4 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
-                <div className="flex-1">
-                  <div className="font-medium">{session.course}</div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {session.date} at {session.time} • Instructor: {session.instructor}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <div className="text-sm font-medium">{session.enrolled}/{session.capacity}</div>
-                    <div className="text-xs text-muted-foreground">Enrolled</div>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    Manage
-                  </Button>
-                </div>
+            {loading ? (
+              <div className="text-center py-4 text-muted-foreground">Loading sessions...</div>
+            ) : upcomingSessions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calendar className="w-8 h-8 mx-auto mb-2" />
+                <p>No upcoming sessions scheduled</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => navigate('/sessions')}
+                >
+                  View All Sessions
+                </Button>
               </div>
-            ))}
+            ) : (
+              upcomingSessions.map((session) => (
+                <div key={session.id} className="flex items-center justify-between p-4 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors">
+                  <div className="flex-1">
+                    <div className="font-medium">{session.title}</div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      {new Date(session.start_date).toLocaleDateString()} at {new Date(session.start_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {session.employees?.name && ` • Instructor: ${session.employees.name}`}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {session.courses?.code} - {session.courses?.title}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-sm font-medium">
+                        {session.session_enrollments?.length || 0} / {session.max_seats || '∞'}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Enrolled</div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/sessions')}
+                    >
+                      Manage
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+            {!loading && upcomingSessions.length > 0 && (
+              <div className="pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => navigate('/sessions')}
+                >
+                  View All Sessions
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

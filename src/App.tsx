@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Plans from "./pages/Plans";
+import Sessions from "./pages/Sessions";
 import Scorecards from "./pages/Scorecards";
 import Evaluations from "./pages/Evaluations";
 import Costs from "./pages/Costs";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><TrainingLayout><Dashboard /></TrainingLayout></ProtectedRoute>} />
             <Route path="/courses" element={<ProtectedRoute><TrainingLayout><Courses /></TrainingLayout></ProtectedRoute>} />
             <Route path="/plans" element={<ProtectedRoute><TrainingLayout><Plans /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/sessions" element={<ProtectedRoute><TrainingLayout><Sessions /></TrainingLayout></ProtectedRoute>} />
             <Route path="/scorecards" element={<ProtectedRoute><TrainingLayout><Scorecards /></TrainingLayout></ProtectedRoute>} />
             <Route path="/evaluations" element={<ProtectedRoute><TrainingLayout><Evaluations /></TrainingLayout></ProtectedRoute>} />
             <Route path="/costs" element={<ProtectedRoute><TrainingLayout><Costs /></TrainingLayout></ProtectedRoute>} />

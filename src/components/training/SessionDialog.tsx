@@ -16,10 +16,11 @@ type Employee = Tables<'employees'>;
 
 interface SessionDialogProps {
   session?: Session;
+  planId?: string;
   trigger: React.ReactNode;
 }
 
-export function SessionDialog({ session, trigger }: SessionDialogProps) {
+export function SessionDialog({ session, planId, trigger }: SessionDialogProps) {
   const { createSession, updateSession } = useSessions();
   const { courses } = useCourses();
   const [open, setOpen] = useState(false);
@@ -91,6 +92,7 @@ export function SessionDialog({ session, trigger }: SessionDialogProps) {
         ...formData,
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
+        plan_id: planId || null,
       };
 
       if (session) {

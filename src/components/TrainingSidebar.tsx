@@ -6,7 +6,8 @@ import {
   DollarSign, 
   Bell,
   GraduationCap,
-  Settings
+  Settings,
+  Clock
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -24,6 +25,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
   { title: "Course Catalog", url: "/courses", icon: BookOpen },
   { title: "Training Plans", url: "/plans", icon: Calendar },
+  { title: "Training Sessions", url: "/sessions", icon: Clock },
   { title: "Employee Scorecards", url: "/scorecards", icon: Users },
   { title: "Evaluations", url: "/evaluations", icon: GraduationCap },
   { title: "Cost Management", url: "/costs", icon: DollarSign },
