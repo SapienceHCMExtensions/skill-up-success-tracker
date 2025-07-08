@@ -32,7 +32,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
     title: session?.title || '',
     start_date: session?.start_date ? new Date(session.start_date).toISOString().slice(0, 16) : '',
     end_date: session?.end_date ? new Date(session.end_date).toISOString().slice(0, 16) : '',
-    instructor_id: session?.instructor_id || '',
+    instructor_id: session?.instructor_id || 'none',
     location: session?.location || '',
     max_seats: session?.max_seats || 20,
   });
@@ -93,7 +93,8 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
         plan_id: planId || null,
-        instructor_id: formData.instructor_id === 'none' ? null : formData.instructor_id,
+        instructor_id: formData.instructor_id === 'none' || formData.instructor_id === '' ? null : formData.instructor_id,
+        course_id: formData.course_id || null,
       };
 
       if (session) {
