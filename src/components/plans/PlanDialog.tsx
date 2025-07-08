@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlans } from '@/hooks/usePlans';
+import { PlanGeneralInfo } from './PlanGeneralInfo';
+import { PlanContent } from './PlanContent';
+import { PlanDelivery } from './PlanDelivery';
+import { PlanSchedule } from './PlanSchedule';
+import { PlanAssessment } from './PlanAssessment';
+import { PlanBudget } from './PlanBudget';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Plan = Tables<'plans'>;
@@ -25,10 +28,24 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
   
   const [formData, setFormData] = useState({
     name: plan?.name || '',
+    description: plan?.description || '',
+    objectives: plan?.objectives || [],
+    target_audience: plan?.target_audience || '',
     department_id: plan?.department_id || '',
+    skill_gap_tags: plan?.skill_gap_tags || [],
     year: plan?.year || new Date().getFullYear(),
     quarter: plan?.quarter || null,
     estimated_cost: plan?.estimated_cost || 0,
+    delivery_mode: plan?.delivery_mode || '',
+    tools_required: plan?.tools_required || [],
+    location_platform_info: plan?.location_platform_info || '',
+    status: plan?.status || 'draft',
+    modules: [],
+    resources: [],
+    trainers: [],
+    evaluations: [],
+    success_metrics: [],
+    cost_breakdown: []
   });
 
   const fetchDepartments = async () => {
@@ -50,25 +67,46 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent | null, saveAs: 'draft' | 'published' = 'published') => {
+    if (e) e.preventDefault();
     setLoading(true);
 
     try {
+      const submitData = {
+        ...formData,
+        status: saveAs,
+        objectives: formData.objectives,
+        success_metrics: formData.success_metrics
+      };
+
       if (plan) {
-        await updatePlan(plan.id, formData);
+        await updatePlan(plan.id, submitData);
       } else {
-        await createPlan(formData);
+        await createPlan(submitData);
       }
       setOpen(false);
       // Reset form if creating new plan
       if (!plan) {
         setFormData({
           name: '',
+          description: '',
+          objectives: [],
+          target_audience: '',
           department_id: '',
+          skill_gap_tags: [],
           year: new Date().getFullYear(),
           quarter: null,
           estimated_cost: 0,
+          delivery_mode: '',
+          tools_required: [],
+          location_platform_info: '',
+          status: 'draft',
+          modules: [],
+          resources: [],
+          trainers: [],
+          evaluations: [],
+          success_metrics: [],
+          cost_breakdown: []
         });
       }
     } catch (error) {
@@ -91,99 +129,77 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>
             {plan ? 'Edit Training Plan' : 'Create New Training Plan'}
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="name">Plan Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter training plan name"
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit}>
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="delivery">Delivery</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="assessment">Assessment</TabsTrigger>
+              <TabsTrigger value="budget">Budget</TabsTrigger>
+            </TabsList>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="department_id">Department</Label>
-              <Select
-                value={formData.department_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, department_id: value === "all" ? "" : value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  {departments.map(dept => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="estimated_cost">Estimated Cost ($)</Label>
-              <Input
-                id="estimated_cost"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.estimated_cost || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, estimated_cost: parseFloat(e.target.value) || 0 }))}
-              />
-            </div>
-          </div>
+            <div className="mt-6 max-h-[60vh] overflow-y-auto">
+              <TabsContent value="general" className="space-y-4">
+                <PlanGeneralInfo 
+                  formData={formData} 
+                  setFormData={setFormData} 
+                  departments={departments} 
+                />
+              </TabsContent>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="year">Year</Label>
-              <Input
-                id="year"
-                type="number"
-                min="2020"
-                max="2030"
-                value={formData.year}
-                onChange={(e) => setFormData(prev => ({ ...prev, year: parseInt(e.target.value) || new Date().getFullYear() }))}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="quarter">Quarter (Optional)</Label>
-              <Select
-                value={formData.quarter?.toString() || "none"}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, quarter: value === "none" ? null : parseInt(value) }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select quarter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No specific quarter</SelectItem>
-                  <SelectItem value="1">Q1</SelectItem>
-                  <SelectItem value="2">Q2</SelectItem>
-                  <SelectItem value="3">Q3</SelectItem>
-                  <SelectItem value="4">Q4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <TabsContent value="content" className="space-y-4">
+                <PlanContent formData={formData} setFormData={setFormData} />
+              </TabsContent>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading} className="bg-gradient-primary hover:bg-primary-hover">
-              {loading ? 'Saving...' : (plan ? 'Update Plan' : 'Create Plan')}
-            </Button>
-          </div>
+              <TabsContent value="delivery" className="space-y-4">
+                <PlanDelivery formData={formData} setFormData={setFormData} />
+              </TabsContent>
+
+              <TabsContent value="schedule" className="space-y-4">
+                <PlanSchedule formData={formData} setFormData={setFormData} />
+              </TabsContent>
+
+              <TabsContent value="assessment" className="space-y-4">
+                <PlanAssessment formData={formData} setFormData={setFormData} />
+              </TabsContent>
+
+              <TabsContent value="budget" className="space-y-4">
+                <PlanBudget formData={formData} setFormData={setFormData} />
+              </TabsContent>
+            </div>
+
+            <div className="flex justify-between pt-6 border-t">
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => handleSubmit(null, 'draft')}
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save as Draft'}
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="bg-gradient-primary hover:bg-primary-hover"
+                >
+                  {loading ? 'Publishing...' : (plan ? 'Update Plan' : 'Publish Plan')}
+                </Button>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </Tabs>
         </form>
       </DialogContent>
     </Dialog>

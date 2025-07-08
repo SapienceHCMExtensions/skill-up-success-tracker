@@ -68,9 +68,24 @@ export function usePlans() {
     }
   };
 
-  const createPlan = async (planData: PlanInsert & { employee_ids?: string[] }) => {
+  const createPlan = async (planData: PlanInsert & { 
+    employee_ids?: string[], 
+    modules?: any[], 
+    resources?: any[], 
+    trainers?: any[],
+    evaluations?: any[],
+    cost_breakdown?: any[]
+  }) => {
     try {
-      const { employee_ids, ...planInsertData } = planData;
+      const { 
+        employee_ids, 
+        modules, 
+        resources, 
+        trainers, 
+        evaluations, 
+        cost_breakdown,
+        ...planInsertData 
+      } = planData;
       
       // Add created_by if we have employee profile
       const insertData = {
@@ -111,6 +126,90 @@ export function usePlans() {
           .insert(planEmployees);
 
         if (employeeError) throw employeeError;
+      }
+
+      // Add modules if provided
+      if (modules && modules.length > 0) {
+        const planModules = modules.map(module => ({
+          plan_id: data.id,
+          name: module.name,
+          content_type: module.content_type,
+          duration_hours: module.duration_hours,
+          learning_outcomes: module.learning_outcomes,
+          start_date: module.start_date || null,
+          end_date: module.end_date || null
+        }));
+
+        const { error: moduleError } = await supabase
+          .from('plan_modules')
+          .insert(planModules);
+
+        if (moduleError) throw moduleError;
+      }
+
+      // Add resources if provided
+      if (resources && resources.length > 0) {
+        const planResources = resources.map(resource => ({
+          plan_id: data.id,
+          name: resource.name,
+          resource_type: resource.resource_type,
+          url_or_path: resource.url_or_path,
+          description: resource.description
+        }));
+
+        const { error: resourceError } = await supabase
+          .from('plan_resources')
+          .insert(planResources);
+
+        if (resourceError) throw resourceError;
+      }
+
+      // Add trainers if provided
+      if (trainers && trainers.length > 0) {
+        const planTrainers = trainers.map(trainer => ({
+          plan_id: data.id,
+          trainer_id: trainer.trainer_id,
+          role: trainer.role || 'instructor'
+        }));
+
+        const { error: trainerError } = await supabase
+          .from('plan_trainers')
+          .insert(planTrainers);
+
+        if (trainerError) throw trainerError;
+      }
+
+      // Add evaluations if provided
+      if (evaluations && evaluations.length > 0) {
+        const planEvaluations = evaluations.map(evaluation => ({
+          plan_id: data.id,
+          evaluation_type: evaluation.evaluation_type,
+          title: evaluation.title,
+          description: evaluation.description,
+          questions: null
+        }));
+
+        const { error: evaluationError } = await supabase
+          .from('plan_evaluations')
+          .insert(planEvaluations);
+
+        if (evaluationError) throw evaluationError;
+      }
+
+      // Add cost breakdown if provided
+      if (cost_breakdown && cost_breakdown.length > 0) {
+        const planCosts = cost_breakdown.map(cost => ({
+          plan_id: data.id,
+          item_name: cost.item_name,
+          cost: cost.cost,
+          description: cost.description
+        }));
+
+        const { error: costError } = await supabase
+          .from('plan_cost_breakdown')
+          .insert(planCosts);
+
+        if (costError) throw costError;
       }
 
       // Fetch the updated plan with all relationships
