@@ -262,7 +262,11 @@ export function PlanDetailsDialog({ plan, trigger }: PlanDetailsDialogProps) {
                 </div>
                 <AssignEmployeesDialog
                   plan={plan}
-                  onEmployeesAssigned={fetchPlanDetails}
+                  onEmployeesAssigned={() => {
+                    // Force a refresh by closing and reopening the dialog
+                    setOpen(false);
+                    setTimeout(() => setOpen(true), 100);
+                  }}
                   trigger={
                     <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
                       <UserPlus className="w-4 h-4 mr-2" />
