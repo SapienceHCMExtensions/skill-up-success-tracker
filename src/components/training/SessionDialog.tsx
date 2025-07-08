@@ -93,6 +93,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
         start_date: new Date(formData.start_date).toISOString(),
         end_date: new Date(formData.end_date).toISOString(),
         plan_id: planId || null,
+        instructor_id: formData.instructor_id === 'none' ? null : formData.instructor_id,
       };
 
       if (session) {
@@ -110,7 +111,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
           title: '',
           start_date: '',
           end_date: '',
-          instructor_id: '',
+          instructor_id: 'none',
           location: '',
           max_seats: 20,
         });
@@ -212,7 +213,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
                   <SelectValue placeholder="Select instructor..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No instructor assigned</SelectItem>
+                  <SelectItem value="none">No instructor assigned</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name}
