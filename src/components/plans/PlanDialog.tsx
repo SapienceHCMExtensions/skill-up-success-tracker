@@ -76,7 +76,8 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
         ...formData,
         status: saveAs,
         objectives: formData.objectives,
-        success_metrics: formData.success_metrics
+        success_metrics: formData.success_metrics,
+        delivery_mode: formData.delivery_mode || null
       };
 
       if (plan) {
