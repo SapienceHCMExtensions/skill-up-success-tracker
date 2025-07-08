@@ -246,11 +246,26 @@ export function usePlans() {
     }
   };
 
-  const updatePlan = async (id: string, planData: PlanUpdate) => {
+  const updatePlan = async (id: string, planData: PlanUpdate & { 
+    modules?: any[], 
+    resources?: any[], 
+    trainers?: any[],
+    evaluations?: any[],
+    cost_breakdown?: any[]
+  }) => {
     try {
+      const { 
+        modules, 
+        resources, 
+        trainers, 
+        evaluations, 
+        cost_breakdown,
+        ...planUpdateData 
+      } = planData;
+      
       const { data, error } = await supabase
         .from('plans')
-        .update(planData)
+        .update(planUpdateData)
         .eq('id', id)
         .select(`
           *,
