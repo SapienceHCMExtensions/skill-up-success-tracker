@@ -9,6 +9,7 @@ import { Calendar, Clock } from 'lucide-react';
 import { useSessions } from '@/hooks/useSessions';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Session = Tables<'sessions'>;
@@ -23,6 +24,7 @@ interface SessionDialogProps {
 export function SessionDialog({ session, planId, trigger }: SessionDialogProps) {
   const { createSession, updateSession } = useSessions();
   const { courses } = useCourses();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -133,20 +135,20 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
-            {session ? 'Edit Training Session' : 'Schedule Training Session'}
+            {session ? t('session.edit', 'Edit Training Session') : t('session.schedule')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <Label htmlFor="course_id">Select Course</Label>
+            <Label htmlFor="course_id">{t('session.selectCourse', 'Select Course')}</Label>
             <Select
               value={formData.course_id}
               onValueChange={(value) => setFormData(prev => ({ ...prev, course_id: value }))}
               required
             >
               <SelectTrigger>
-                <SelectValue placeholder="Choose a course..." />
+                <SelectValue placeholder={t('session.chooseCourse', 'Choose a course...')} />
               </SelectTrigger>
               <SelectContent>
                 {courses.map((course) => (
@@ -164,12 +166,12 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
           </div>
 
           <div>
-            <Label htmlFor="title">Session Title</Label>
+            <Label htmlFor="title">{t('session.title')}</Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter session title"
+              placeholder={t('session.enterTitle', 'Enter session title')}
               required
             />
           </div>
@@ -178,7 +180,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
             <div>
               <Label htmlFor="start_date" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Start Date & Time
+                {t('session.startDate')}
               </Label>
               <Input
                 id="start_date"
@@ -191,7 +193,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
             <div>
               <Label htmlFor="end_date" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                End Date & Time
+                {t('session.endDate')}
               </Label>
               <Input
                 id="end_date"
@@ -205,16 +207,16 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="instructor_id">Instructor (Optional)</Label>
+              <Label htmlFor="instructor_id">{t('session.instructor')}</Label>
               <Select
                 value={formData.instructor_id}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, instructor_id: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select instructor..." />
+                  <SelectValue placeholder={t('session.selectInstructor', 'Select instructor...')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No instructor assigned</SelectItem>
+                  <SelectItem value="none">{t('session.noInstructor', 'No instructor assigned')}</SelectItem>
                   {employees.map((employee) => (
                     <SelectItem key={employee.id} value={employee.id}>
                       {employee.name}
@@ -224,7 +226,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
               </Select>
             </div>
             <div>
-              <Label htmlFor="max_seats">Maximum Seats</Label>
+              <Label htmlFor="max_seats">{t('session.maxSeats')}</Label>
               <Input
                 id="max_seats"
                 type="number"
@@ -237,21 +239,21 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
           </div>
 
           <div>
-            <Label htmlFor="location">Location (Optional)</Label>
+            <Label htmlFor="location">{t('session.location')}</Label>
             <Input
               id="location"
               value={formData.location || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="e.g., Conference Room A, Online, etc."
+              placeholder={t('session.locationPlaceholder', 'e.g., Conference Room A, Online, etc.')}
             />
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={loading} className="bg-gradient-primary hover:bg-primary-hover">
-              {loading ? 'Saving...' : (session ? 'Update Session' : 'Schedule Session')}
+              {loading ? t('common.loading') : (session ? t('session.update', 'Update Session') : t('session.schedule'))}
             </Button>
           </div>
         </form>

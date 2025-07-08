@@ -3,6 +3,8 @@ import { TrainingSidebar } from "@/components/TrainingSidebar"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
+import { useLanguage } from "@/contexts/LanguageContext"
+import { LanguageSelector } from "@/components/language/LanguageSelector"
 
 interface TrainingLayoutProps {
   children: React.ReactNode
@@ -10,6 +12,7 @@ interface TrainingLayoutProps {
 
 export function TrainingLayout({ children }: TrainingLayoutProps) {
   const { employeeProfile, signOut, userRole } = useAuth();
+  const { t, isRTL } = useLanguage();
 
   return (
     <SidebarProvider>
@@ -18,15 +21,16 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
         
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b bg-card shadow-sm flex items-center px-6">
-            <SidebarTrigger className="mr-4" />
+            <SidebarTrigger className={isRTL ? "ml-4" : "mr-4"} />
             <div className="flex items-center justify-between w-full">
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Training Management System</h1>
+                <h1 className="text-xl font-semibold text-foreground">{t('app.title')}</h1>
               </div>
               <div className="flex items-center gap-4">
                 <div className="text-sm text-muted-foreground">
-                  Welcome, {employeeProfile?.name || 'User'} ({userRole})
+                  {t('common.welcome')}, {employeeProfile?.name || 'User'} ({userRole})
                 </div>
+                <LanguageSelector />
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                 </Button>

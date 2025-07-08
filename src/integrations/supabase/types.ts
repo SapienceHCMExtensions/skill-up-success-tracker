@@ -313,6 +313,39 @@ export type Database = {
           },
         ]
       }
+      languages: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_rtl: boolean
+          name: string
+          native_name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_rtl?: boolean
+          name: string
+          native_name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_rtl?: boolean
+          name?: string
+          native_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plan_cost_breakdown: {
         Row: {
           cost: number
@@ -777,6 +810,44 @@ export type Database = {
           table_name?: string
         }
         Relationships: []
+      }
+      translations: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          language_id: string
+          translation_key: string
+          translation_value: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          language_id: string
+          translation_key: string
+          translation_value: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          language_id?: string
+          translation_key?: string
+          translation_value?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "translations_language_id_fkey"
+            columns: ["language_id"]
+            isOneToOne: false
+            referencedRelation: "languages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

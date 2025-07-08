@@ -7,7 +7,8 @@ import {
   Bell,
   GraduationCap,
   Settings,
-  Clock
+  Clock,
+  Languages
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -20,22 +21,25 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 const navigationItems = [
-  { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "Course Catalog", url: "/courses", icon: BookOpen },
-  { title: "Training Plans", url: "/plans", icon: Calendar },
-  { title: "Training Sessions", url: "/sessions", icon: Clock },
-  { title: "Employee Scorecards", url: "/scorecards", icon: Users },
-  { title: "Evaluations", url: "/evaluations", icon: GraduationCap },
-  { title: "Cost Management", url: "/costs", icon: DollarSign },
-  { title: "Certificate Alerts", url: "/alerts", icon: Bell },
-  { title: "User Management", url: "/users", icon: Settings },
+  { title: "nav.dashboard", url: "/", icon: BarChart3 },
+  { title: "nav.courses", url: "/courses", icon: BookOpen },
+  { title: "nav.plans", url: "/plans", icon: Calendar },
+  { title: "nav.sessions", url: "/sessions", icon: Clock },
+  { title: "nav.scorecards", url: "/scorecards", icon: Users },
+  { title: "nav.evaluations", url: "/evaluations", icon: GraduationCap },
+  { title: "nav.costs", url: "/costs", icon: DollarSign },
+  { title: "nav.alerts", url: "/alerts", icon: Bell },
+  { title: "nav.users", url: "/users", icon: Settings },
+  { title: "Translations", url: "/translations", icon: Languages },
 ]
 
 export function TrainingSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
+  const { t, isRTL } = useLanguage()
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -50,7 +54,7 @@ export function TrainingSidebar() {
       : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" side={isRTL ? "right" : "left"}>
       <SidebarContent className="bg-card border-r">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2">
@@ -59,14 +63,14 @@ export function TrainingSidebar() {
             </div>
             <div className="group-data-[collapsible=icon]:hidden">
               <div className="font-semibold text-sm">TMS</div>
-              <div className="text-xs text-muted-foreground">Training System</div>
+              <div className="text-xs text-muted-foreground">{t('app.title')}</div>
             </div>
           </div>
         </div>
 
         <SidebarGroup className="px-2">
           <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
-            Navigation
+            {t('nav.title', 'Navigation')}
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
@@ -76,10 +80,10 @@ export function TrainingSidebar() {
                     <NavLink 
                       to={item.url} 
                       end={item.url === "/"}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all ${getNavClass(item.url)}`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all ${getNavClass(item.url)} ${isRTL ? 'flex-row-reverse' : ''}`}
                     >
                       <item.icon className="w-5 h-5 flex-shrink-0" />
-                      <span className="text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      <span className="text-sm group-data-[collapsible=icon]:hidden">{t(item.title)}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
