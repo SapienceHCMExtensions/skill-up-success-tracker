@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Users, Calendar, DollarSign, Clock, BookOpen, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, Calendar, DollarSign, Clock, BookOpen, TrendingUp, AlertCircle, UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { AssignEmployeesDialog } from './AssignEmployeesDialog';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Plan = Tables<'plans'> & {
@@ -252,11 +253,23 @@ export function PlanDetailsDialog({ plan, trigger }: PlanDetailsDialogProps) {
 
           <TabsContent value="employees" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Assigned Employees</CardTitle>
-                <CardDescription>
-                  Employees assigned to this training plan
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <div>
+                  <CardTitle>Assigned Employees</CardTitle>
+                  <CardDescription>
+                    Employees assigned to this training plan
+                  </CardDescription>
+                </div>
+                <AssignEmployeesDialog
+                  plan={plan}
+                  onEmployeesAssigned={fetchPlanDetails}
+                  trigger={
+                    <Button size="sm" className="bg-gradient-primary hover:bg-primary-hover">
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Assign Employees
+                    </Button>
+                  }
+                />
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
