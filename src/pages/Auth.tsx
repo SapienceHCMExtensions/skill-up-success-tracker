@@ -18,7 +18,7 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-dashboard">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Checking authentication...</p>
@@ -57,10 +57,10 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-dashboard">
       <div className="grid lg:grid-cols-2 min-h-screen">
         {/* Left side - Hero Image and Content */}
-        <div className="hidden lg:flex flex-col justify-center items-center p-12 bg-background">
+        <div className="hidden lg:flex flex-col justify-center items-center p-12">
           <div className="max-w-lg text-center space-y-6">
             <div className="mb-8">
               <img 
@@ -100,8 +100,8 @@ export default function Auth() {
         </div>
 
         {/* Right side - Login Form */}
-        <div className="flex items-center justify-center p-8 lg:p-12 bg-background">
-          <Card className="w-full max-w-md border-0 bg-background shadow-none">
+        <div className="flex items-center justify-center p-8 lg:p-12">
+          <Card className="w-full max-w-md shadow-elegant border-0 bg-card/90 backdrop-blur-sm">
             <CardHeader className="space-y-1 pb-6">
               <CardTitle className="text-2xl text-center font-semibold">
                 {isLogin ? 'Welcome Back' : 'Create Account'}
