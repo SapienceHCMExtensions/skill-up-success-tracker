@@ -60,7 +60,7 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-dashboard">
       <div className="grid lg:grid-cols-2 min-h-screen">
         {/* Left side - Hero Image and Content */}
-        <div className="hidden lg:flex flex-col justify-center items-center p-12 bg-card/50 backdrop-blur-sm">
+        <div className="hidden lg:flex flex-col justify-center items-center p-12">
           <div className="max-w-lg text-center space-y-6">
             <div className="mb-8">
               <img 
@@ -190,7 +190,7 @@ export default function Auth() {
         </div>
 
         {/* Mobile Hero Section */}
-        <div className="lg:hidden flex flex-col items-center justify-center p-8 bg-card/50 backdrop-blur-sm">
+        <div className="lg:hidden flex flex-col items-center justify-center p-8">
           <div className="max-w-sm text-center space-y-4">
             <img 
               src="/lovable-uploads/e3c12c37-7d1a-4e04-aa9f-eb17ab4941dc.png" 
