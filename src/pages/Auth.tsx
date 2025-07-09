@@ -57,7 +57,7 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dashboard">
+    <div className="min-h-screen bg-background">
       <div className="grid lg:grid-cols-2 min-h-screen">
         {/* Left side - Hero Image and Content */}
         <div className="hidden lg:flex flex-col justify-center items-center p-12">
