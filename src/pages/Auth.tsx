@@ -18,7 +18,7 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-dashboard">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Checking authentication...</p>
@@ -101,7 +101,7 @@ export default function Auth() {
 
         {/* Right side - Login Form */}
         <div className="flex items-center justify-center p-8 lg:p-12">
-          <Card className="w-full max-w-md shadow-elegant border-0 bg-card/90 backdrop-blur-sm">
+          <Card className="w-full max-w-md border-0 bg-background shadow-none">
             <CardHeader className="space-y-1 pb-6">
               <CardTitle className="text-2xl text-center font-semibold">
                 {isLogin ? 'Welcome Back' : 'Create Account'}
