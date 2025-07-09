@@ -60,7 +60,7 @@ export default function Auth() {
     <div className="min-h-screen bg-background">
       <div className="grid lg:grid-cols-2 min-h-screen">
         {/* Left side - Hero Image and Content */}
-        <div className="hidden lg:flex flex-col justify-center items-center p-12">
+        <div className="hidden lg:flex flex-col justify-center items-center p-12 bg-background">
           <div className="max-w-lg text-center space-y-6">
             <div className="mb-8">
               <img 
@@ -100,7 +100,7 @@ export default function Auth() {
         </div>
 
         {/* Right side - Login Form */}
-        <div className="flex items-center justify-center p-8 lg:p-12">
+        <div className="flex items-center justify-center p-8 lg:p-12 bg-background">
           <Card className="w-full max-w-md border-0 bg-background shadow-none">
             <CardHeader className="space-y-1 pb-6">
               <CardTitle className="text-2xl text-center font-semibold">
