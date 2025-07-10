@@ -233,12 +233,17 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => setOpen(false)}
+            type="button"
+          >
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={loading || !title || !justification || !selectedEmployeeId}
+            type="button"
           >
             {loading ? 'Creating...' : 'Create Request'}
           </Button>
