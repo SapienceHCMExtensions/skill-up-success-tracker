@@ -17,6 +17,7 @@ import Costs from "./pages/Costs";
 import Alerts from "./pages/Alerts";
 import UserManagement from "./pages/UserManagement";
 import TranslationManagement from "./pages/TranslationManagement";
+import TrainingRequests from "./pages/TrainingRequests";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="/alerts" element={<ProtectedRoute><TrainingLayout><Alerts /></TrainingLayout></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><TrainingLayout><UserManagement /></TrainingLayout></ProtectedRoute>} />
             <Route path="/translations" element={<ProtectedRoute><TrainingLayout><TranslationManagement /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/training-requests" element={<ProtectedRoute><TrainingLayout><TrainingRequests /></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

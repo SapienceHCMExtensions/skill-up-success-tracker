@@ -8,7 +8,8 @@ import {
   GraduationCap,
   Settings,
   Clock,
-  Languages
+  Languages,
+  FileText
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -28,6 +29,7 @@ const navigationItems = [
   { title: "nav.courses", url: "/courses", icon: BookOpen },
   { title: "nav.plans", url: "/plans", icon: Calendar },
   { title: "nav.sessions", url: "/sessions", icon: Clock },
+  { title: "Training Requests", url: "/training-requests", icon: FileText },
   { title: "nav.scorecards", url: "/scorecards", icon: Users },
   { title: "nav.evaluations", url: "/evaluations", icon: GraduationCap },
   { title: "nav.costs", url: "/costs", icon: DollarSign },
