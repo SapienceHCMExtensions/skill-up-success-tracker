@@ -40,7 +40,7 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
   const [trainingProvider, setTrainingProvider] = useState('');
   const [trainingDate, setTrainingDate] = useState<Date | undefined>();
   const [estimatedCost, setEstimatedCost] = useState('');
-  const [courseId, setCourseId] = useState<string>('');
+  const [courseId, setCourseId] = useState<string>('none');
 
   const { courses } = useCourses();
   const { createRequest } = useTrainingRequests();
@@ -66,7 +66,7 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
       setTrainingProvider('');
       setTrainingDate(undefined);
       setEstimatedCost('');
-      setCourseId('');
+      setCourseId('none');
       setSelectedEmployeeId(employeeId || '');
     }
   };
@@ -84,7 +84,7 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
         training_date: trainingDate ? format(trainingDate, 'yyyy-MM-dd') : undefined,
         estimated_cost: estimatedCost ? parseFloat(estimatedCost) : undefined,
         justification,
-        course_id: courseId || undefined,
+        course_id: courseId !== 'none' ? courseId : undefined,
       });
       setOpen(false);
     } finally {
@@ -144,7 +144,7 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
                 <SelectValue placeholder="Select existing course" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No existing course</SelectItem>
+                <SelectItem value="none">No existing course</SelectItem>
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={course.id}>
                     {course.code} - {course.title}
