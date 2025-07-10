@@ -313,6 +313,51 @@ export type Database = {
           },
         ]
       }
+      external_trainers: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          email: string | null
+          expertise_areas: string[] | null
+          hourly_rate: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization: string | null
+          phone: string | null
+          trainer_type: Database["public"]["Enums"]["trainer_type"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          expertise_areas?: string[] | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization?: string | null
+          phone?: string | null
+          trainer_type?: Database["public"]["Enums"]["trainer_type"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          email?: string | null
+          expertise_areas?: string[] | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization?: string | null
+          phone?: string | null
+          trainer_type?: Database["public"]["Enums"]["trainer_type"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       languages: {
         Row: {
           code: string
@@ -811,6 +856,210 @@ export type Database = {
         }
         Relationships: []
       }
+      training_requests: {
+        Row: {
+          approval_comment: string | null
+          approval_date: string | null
+          approved_by: string | null
+          certificate_url: string | null
+          course_id: string | null
+          created_at: string | null
+          description: string | null
+          employee_id: string
+          estimated_cost: number | null
+          expense_claim_id: string | null
+          id: string
+          justification: string
+          requested_by: string
+          session_id: string | null
+          status: Database["public"]["Enums"]["training_request_status"] | null
+          title: string
+          training_date: string | null
+          training_provider: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approval_comment?: string | null
+          approval_date?: string | null
+          approved_by?: string | null
+          certificate_url?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_id: string
+          estimated_cost?: number | null
+          expense_claim_id?: string | null
+          id?: string
+          justification: string
+          requested_by: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["training_request_status"] | null
+          title: string
+          training_date?: string | null
+          training_provider?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approval_comment?: string | null
+          approval_date?: string | null
+          approved_by?: string | null
+          certificate_url?: string | null
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string
+          estimated_cost?: number | null
+          expense_claim_id?: string | null
+          id?: string
+          justification?: string
+          requested_by?: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["training_request_status"] | null
+          title?: string
+          training_date?: string | null
+          training_provider?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_requests_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_requests_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_requests_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_vendors: {
+        Row: {
+          address: string | null
+          category_tags: string[] | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          is_approved: boolean | null
+          name: string
+          phone: string | null
+          updated_at: string | null
+          vendor_type: Database["public"]["Enums"]["vendor_type"] | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category_tags?: string[] | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_approved?: boolean | null
+          name: string
+          phone?: string | null
+          updated_at?: string | null
+          vendor_type?: Database["public"]["Enums"]["vendor_type"] | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category_tags?: string[] | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_approved?: boolean | null
+          name?: string
+          phone?: string | null
+          updated_at?: string | null
+          vendor_type?: Database["public"]["Enums"]["vendor_type"] | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      training_workflow_logs: {
+        Row: {
+          action_taken: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          new_status: Database["public"]["Enums"]["training_request_status"]
+          previous_status:
+            | Database["public"]["Enums"]["training_request_status"]
+            | null
+          training_request_id: string
+          user_id: string
+        }
+        Insert: {
+          action_taken: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          new_status: Database["public"]["Enums"]["training_request_status"]
+          previous_status?:
+            | Database["public"]["Enums"]["training_request_status"]
+            | null
+          training_request_id: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          new_status?: Database["public"]["Enums"]["training_request_status"]
+          previous_status?:
+            | Database["public"]["Enums"]["training_request_status"]
+            | null
+          training_request_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_workflow_logs_training_request_id_fkey"
+            columns: ["training_request_id"]
+            isOneToOne: false
+            referencedRelation: "training_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_workflow_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       translations: {
         Row: {
           category: string | null
@@ -903,6 +1152,16 @@ export type Database = {
         | "absent"
       provider_type: "internal" | "external"
       session_status: "scheduled" | "in_progress" | "completed" | "cancelled"
+      trainer_type: "internal" | "external"
+      training_request_status:
+        | "draft"
+        | "pending_approval"
+        | "approved"
+        | "rejected"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+      vendor_type: "individual" | "company"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1047,6 +1306,17 @@ export const Constants = {
       ],
       provider_type: ["internal", "external"],
       session_status: ["scheduled", "in_progress", "completed", "cancelled"],
+      trainer_type: ["internal", "external"],
+      training_request_status: [
+        "draft",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+      vendor_type: ["individual", "company"],
     },
   },
 } as const
