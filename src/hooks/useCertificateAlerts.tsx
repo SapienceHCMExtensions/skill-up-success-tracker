@@ -42,7 +42,7 @@ export function useCertificateAlerts() {
           *,
           employees!inner(
             *,
-            department:departments(*)
+            department:departments!fk_employee_department(*)
           ),
           courses!inner(*)
         `)
