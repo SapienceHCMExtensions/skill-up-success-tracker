@@ -13,23 +13,23 @@ import {
   Users,
   TrendingUp
 } from "lucide-react"
-import { useEvaluations } from "@/hooks/useEvaluations"
+import { useCourseEvaluations } from "@/hooks/useCourseEvaluations"
 import { AnalyticsDashboard } from "@/components/evaluations/AnalyticsDashboard"
-import { EvaluationForm } from "@/components/evaluations/EvaluationForm"
+import { CourseEvaluationForm } from "@/components/evaluations/CourseEvaluationForm"
 import { FullReport } from "@/components/evaluations/FullReport"
 import { useToast } from "@/hooks/use-toast"
 
 export default function Evaluations() {
-  const { responses, loading, createEvaluation, getAnalytics } = useEvaluations();
+  const { responses, loading, createEvaluation, getAnalytics } = useCourseEvaluations();
   const [activeTab, setActiveTab] = useState('analytics');
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   const analytics = getAnalytics();
 
-  const handleCreateEvaluation = async (sessionId: string, templateId: string, responses: any, rating: number) => {
+  const handleCreateEvaluation = async (courseId: string, templateId: string, responses: any, rating: number, trainingRequestId?: string) => {
     setSubmitting(true);
-    const result = await createEvaluation(sessionId, templateId, responses, rating);
+    const result = await createEvaluation(courseId, templateId, responses, rating, trainingRequestId);
     setSubmitting(false);
     
     if (!result.error) {
@@ -160,7 +160,7 @@ export default function Evaluations() {
         </TabsContent>
 
         <TabsContent value="create" className="space-y-6">
-          <EvaluationForm onSubmit={handleCreateEvaluation} loading={submitting} />
+          <CourseEvaluationForm />
         </TabsContent>
 
         <TabsContent value="report" className="space-y-6">
@@ -191,7 +191,7 @@ export default function Evaluations() {
                             {response.employee?.name || 'Anonymous'}
                           </span>
                           <Badge variant="outline">
-                            {response.session?.course?.title || 'Unknown Course'}
+                            {response.course?.title || 'Unknown Course'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1">
@@ -208,7 +208,7 @@ export default function Evaluations() {
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Session: {response.session?.title || 'N/A'}
+                        Course: {response.course?.title || 'N/A'}
                       </div>
                       <div className="text-xs text-muted-foreground mt-2">
                         Submitted: {new Date(response.submitted_at).toLocaleDateString()}

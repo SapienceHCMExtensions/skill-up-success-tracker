@@ -59,6 +59,167 @@ export type Database = {
           },
         ]
       }
+      course_cost_actuals: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          cost_type: string
+          course_id: string | null
+          created_at: string | null
+          description: string | null
+          employee_id: string | null
+          expense_date: string | null
+          id: string
+          invoice_no: string | null
+          receipt_url: string | null
+          recorded_at: string | null
+          recorded_by: string | null
+          status: string | null
+          training_request_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_type: string
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string | null
+          id?: string
+          invoice_no?: string | null
+          receipt_url?: string | null
+          recorded_at?: string | null
+          recorded_by?: string | null
+          status?: string | null
+          training_request_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          cost_type?: string
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          employee_id?: string | null
+          expense_date?: string | null
+          id?: string
+          invoice_no?: string | null
+          receipt_url?: string | null
+          recorded_at?: string | null
+          recorded_by?: string | null
+          status?: string | null
+          training_request_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_cost_actuals_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_cost_actuals_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_cost_actuals_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_cost_actuals_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_cost_actuals_training_request_id_fkey"
+            columns: ["training_request_id"]
+            isOneToOne: false
+            referencedRelation: "training_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_evaluation_responses: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          overall_rating: number | null
+          responses: Json
+          submitted_at: string | null
+          template_id: string | null
+          training_request_id: string | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          overall_rating?: number | null
+          responses: Json
+          submitted_at?: string | null
+          template_id?: string | null
+          training_request_id?: string | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          overall_rating?: number | null
+          responses?: Json
+          submitted_at?: string | null
+          template_id?: string | null
+          training_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_evaluation_responses_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_evaluation_responses_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_evaluation_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_evaluation_responses_training_request_id_fkey"
+            columns: ["training_request_id"]
+            isOneToOne: false
+            referencedRelation: "training_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           certificate_validity_months: number | null
@@ -868,12 +1029,15 @@ export type Database = {
           employee_id: string
           estimated_cost: number | null
           expense_claim_id: string | null
+          expense_status: string | null
           id: string
           justification: string
           requested_by: string
           session_id: string | null
           status: Database["public"]["Enums"]["training_request_status"] | null
           title: string
+          total_actual_cost: number | null
+          total_approved_cost: number | null
           training_date: string | null
           training_provider: string | null
           updated_at: string | null
@@ -889,12 +1053,15 @@ export type Database = {
           employee_id: string
           estimated_cost?: number | null
           expense_claim_id?: string | null
+          expense_status?: string | null
           id?: string
           justification: string
           requested_by: string
           session_id?: string | null
           status?: Database["public"]["Enums"]["training_request_status"] | null
           title: string
+          total_actual_cost?: number | null
+          total_approved_cost?: number | null
           training_date?: string | null
           training_provider?: string | null
           updated_at?: string | null
@@ -910,12 +1077,15 @@ export type Database = {
           employee_id?: string
           estimated_cost?: number | null
           expense_claim_id?: string | null
+          expense_status?: string | null
           id?: string
           justification?: string
           requested_by?: string
           session_id?: string | null
           status?: Database["public"]["Enums"]["training_request_status"] | null
           title?: string
+          total_actual_cost?: number | null
+          total_approved_cost?: number | null
           training_date?: string | null
           training_provider?: string | null
           updated_at?: string | null

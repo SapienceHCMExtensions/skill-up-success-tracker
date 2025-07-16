@@ -1,29 +1,11 @@
-import { useState } from 'react';
-import { useCosts } from '@/hooks/useCosts';
-import { CostAnalytics } from '@/components/costs/CostAnalytics';
-import { CostForm } from '@/components/costs/CostForm';
-import { CostActualsTable } from '@/components/costs/CostActualsTable';
+import { ExpenseAnalytics } from '@/components/costs/ExpenseAnalytics';
+import { ExpenseForm } from '@/components/costs/ExpenseForm';
+import { ExpenseTable } from '@/components/costs/ExpenseTable';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Plus, Receipt, TrendingUp } from 'lucide-react';
 
 export default function Costs() {
-  const { costActuals, loading, createCostActual, getCostSummary } = useCosts();
-  const [isFormLoading, setIsFormLoading] = useState(false);
-
-  const handleCreateCost = async (costData: {
-    sessionId: string;
-    amount: number;
-    description?: string;
-    invoiceNo?: string;
-  }) => {
-    setIsFormLoading(true);
-    const result = await createCostActual(costData);
-    setIsFormLoading(false);
-    return result;
-  };
-
-  const costSummary = getCostSummary();
 
   return (
     <div className="space-y-6">
@@ -59,15 +41,15 @@ export default function Costs() {
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-6">
-          <CostAnalytics costSummary={costSummary} />
+          <ExpenseAnalytics />
         </TabsContent>
 
         <TabsContent value="records" className="space-y-6">
-          <CostActualsTable costActuals={costActuals} isLoading={loading} />
+          <ExpenseTable />
         </TabsContent>
 
         <TabsContent value="add" className="space-y-6">
-          <CostForm onSubmit={handleCreateCost} loading={isFormLoading} />
+          <ExpenseForm />
         </TabsContent>
       </Tabs>
     </div>
