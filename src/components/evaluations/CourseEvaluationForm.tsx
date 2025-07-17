@@ -49,7 +49,7 @@ export function CourseEvaluationForm() {
 
       await createEvaluation(
         data.course_id, 
-        'default-template', // You might want to make this dynamic
+        null,
         responses, 
         data.overall_rating,
         data.training_request_id

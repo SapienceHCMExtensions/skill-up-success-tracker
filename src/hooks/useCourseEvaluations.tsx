@@ -44,7 +44,7 @@ export function useCourseEvaluations() {
 
   const createEvaluation = async (
     courseId: string, 
-    templateId: string, 
+    templateId: string | null = null, 
     responses: any, 
     overallRating: number,
     trainingRequestId?: string
