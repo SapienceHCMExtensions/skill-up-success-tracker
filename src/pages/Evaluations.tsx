@@ -37,11 +37,155 @@ export default function Evaluations() {
     }
   };
 
-  const handleExport = (format: string) => {
-    toast({
-      title: "Export Feature",
-      description: `${format.toUpperCase()} export functionality available`,
-    });
+  const handleExport = async (format: string) => {
+    if (format === 'pptx') {
+      try {
+        // Dynamic import to avoid bundle issues
+        const PptxGenJS = (await import('pptxgenjs')).default;
+        const pptx = new PptxGenJS();
+        
+        // Set presentation properties
+        pptx.author = 'Training Management System';
+        pptx.company = 'Organization';
+        pptx.revision = '1';
+        pptx.subject = 'Training Evaluation Report';
+        pptx.title = 'Training Evaluation Analysis';
+
+        // Title slide
+        const titleSlide = pptx.addSlide();
+        titleSlide.addText('Training Evaluation Report', {
+          x: 1, y: 2, w: 8, h: 1.5,
+          fontSize: 32, fontFace: 'Arial', color: '363636', bold: true, align: 'center'
+        });
+        titleSlide.addText(`Generated on ${new Date().toLocaleDateString()}`, {
+          x: 1, y: 3.5, w: 8, h: 0.5,
+          fontSize: 16, fontFace: 'Arial', color: '666666', align: 'center'
+        });
+        titleSlide.addText(`${analytics.totalResponses} Total Responses | Average Rating: ${analytics.averageRating.toFixed(1)}/5`, {
+          x: 1, y: 4.5, w: 8, h: 0.5,
+          fontSize: 14, fontFace: 'Arial', color: '888888', align: 'center'
+        });
+
+        // Executive Summary slide
+        const summarySlide = pptx.addSlide();
+        summarySlide.addText('Executive Summary', {
+          x: 0.5, y: 0.5, w: 9, h: 0.8,
+          fontSize: 24, fontFace: 'Arial', color: '363636', bold: true
+        });
+
+        // Add summary metrics
+        const summaryData = [
+          ['Metric', 'Value'],
+          ['Total Responses', analytics.totalResponses.toString()],
+          ['Average Rating', `${analytics.averageRating.toFixed(1)}/5`],
+          ['Response Rate This Month', analytics.responsesByMonth.slice(-1)[0]?.responses.toString() || '0'],
+          ['Top Performing Course', analytics.topCourses.length > 0 ? analytics.topCourses[0].name : 'N/A']
+        ];
+
+        summarySlide.addTable(summaryData, {
+          x: 1, y: 1.5, w: 8, h: 3,
+          fontSize: 12, fontFace: 'Arial',
+          rowH: 0.6, colW: [4, 4],
+          border: { pt: 1, color: 'CFCFCF' },
+          fill: { color: 'F7F7F7' }
+        });
+
+        // Rating Distribution slide
+        const ratingSlide = pptx.addSlide();
+        ratingSlide.addText('Rating Distribution', {
+          x: 0.5, y: 0.5, w: 9, h: 0.8,
+          fontSize: 24, fontFace: 'Arial', color: '363636', bold: true
+        });
+
+        const ratingData = [
+          ['Rating', 'Count', 'Percentage'],
+          ...analytics.ratingDistribution.map(item => [
+            item.rating,
+            item.count.toString(),
+            `${((item.count / analytics.totalResponses) * 100).toFixed(1)}%`
+          ])
+        ];
+
+        ratingSlide.addTable(ratingData, {
+          x: 1, y: 1.5, w: 8, h: 4,
+          fontSize: 12, fontFace: 'Arial',
+          rowH: 0.6, colW: [2.5, 2.5, 3],
+          border: { pt: 1, color: 'CFCFCF' },
+          fill: { color: 'F7F7F7' }
+        });
+
+        // Top Courses slide
+        const coursesSlide = pptx.addSlide();
+        coursesSlide.addText('Top Performing Courses', {
+          x: 0.5, y: 0.5, w: 9, h: 0.8,
+          fontSize: 24, fontFace: 'Arial', color: '363636', bold: true
+        });
+
+        const courseData = [
+          ['Course Name', 'Responses', 'Average Rating'],
+          ...analytics.topCourses.slice(0, 10).map(course => [
+            course.name,
+            course.count.toString(),
+            course.avgRating.toFixed(1)
+          ])
+        ];
+
+        coursesSlide.addTable(courseData, {
+          x: 0.5, y: 1.5, w: 9, h: 5,
+          fontSize: 11, fontFace: 'Arial',
+          rowH: 0.5, colW: [5, 2, 2],
+          border: { pt: 1, color: 'CFCFCF' },
+          fill: { color: 'F7F7F7' }
+        });
+
+        // Recent Feedback slide
+        if (responses.length > 0) {
+          const feedbackSlide = pptx.addSlide();
+          feedbackSlide.addText('Recent Feedback Highlights', {
+            x: 0.5, y: 0.5, w: 9, h: 0.8,
+            fontSize: 24, fontFace: 'Arial', color: '363636', bold: true
+          });
+
+          let yPos = 1.5;
+          responses.slice(0, 3).forEach((response, index) => {
+            const responseData = response.responses as any;
+            const feedbackText = [
+              `${response.employee?.name || 'Anonymous'} - ${response.course?.title || 'Unknown Course'}`,
+              `Rating: ${response.overall_rating}/5 | ${new Date(response.submitted_at).toLocaleDateString()}`,
+              responseData?.course_feedback ? `"${responseData.course_feedback.substring(0, 150)}..."` : 'No detailed feedback provided'
+            ].join('\n');
+
+            feedbackSlide.addText(feedbackText, {
+              x: 0.5, y: yPos, w: 9, h: 1.3,
+              fontSize: 10, fontFace: 'Arial', color: '444444',
+              margin: 0.1, bullet: true
+            });
+            yPos += 1.5;
+          });
+        }
+
+        // Generate and download
+        const fileName = `Training_Evaluation_Report_${new Date().toISOString().split('T')[0]}.pptx`;
+        await pptx.writeFile({ fileName });
+        
+        toast({
+          title: "Export Successful",
+          description: `PowerPoint presentation "${fileName}" has been downloaded`,
+        });
+      } catch (error) {
+        console.error('PowerPoint export error:', error);
+        toast({
+          title: "Export Failed",
+          description: "Failed to generate PowerPoint presentation. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      toast({
+        title: "Export Feature",
+        description: `${format.toUpperCase()} export functionality available`,
+      });
+    }
   };
 
   if (loading) {
