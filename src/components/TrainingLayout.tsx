@@ -2,9 +2,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { TrainingSidebar } from "@/components/TrainingSidebar"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
-import { LogOut } from "lucide-react"
+import { LogOut, Shield } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
+import { Link } from "react-router-dom"
 
 interface TrainingLayoutProps {
   children: React.ReactNode
@@ -31,6 +32,14 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
                   {t('common.welcome')}, {employeeProfile?.name || 'User'} ({userRole})
                 </div>
                 <LanguageSelector />
+                {userRole === 'admin' && (
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/admin">
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={signOut}>
                   <LogOut className="h-4 w-4" />
                 </Button>

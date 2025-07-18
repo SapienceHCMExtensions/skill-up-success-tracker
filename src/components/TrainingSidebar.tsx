@@ -36,8 +36,6 @@ const navigationItems = [
   { title: "nav.evaluations", url: "/evaluations", icon: GraduationCap },
   { title: "nav.costs", url: "/costs", icon: DollarSign },
   { title: "nav.alerts", url: "/alerts", icon: Bell },
-  { title: "nav.users", url: "/users", icon: Settings },
-  { title: "Translations", url: "/translations", icon: Languages },
 ]
 
 export function TrainingSidebar() {
@@ -97,28 +95,6 @@ export function TrainingSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {userRole === 'admin' && (
-          <SidebarGroup className="px-2">
-            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
-              {t('nav.admin', 'Admin')}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild className="h-10">
-                    <NavLink 
-                      to="/admin" 
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all ${getNavClass('/admin')} ${isRTL ? 'flex-row-reverse' : ''}`}
-                    >
-                      <Shield className="w-5 h-5 flex-shrink-0" />
-                      <span className="text-sm group-data-[collapsible=icon]:hidden">{t('nav.admin_panel', 'Admin Panel')}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
     </Sidebar>
   )
