@@ -9,7 +9,8 @@ import {
   Settings,
   Clock,
   Languages,
-  FileText
+  FileText,
+  Shield
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { useAuth } from "@/hooks/useAuth"
 
 const navigationItems = [
   { title: "nav.dashboard", url: "/", icon: BarChart3 },
@@ -42,6 +44,7 @@ export function TrainingSidebar() {
   const location = useLocation()
   const currentPath = location.pathname
   const { t, isRTL } = useLanguage()
+  const { userRole } = useAuth()
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -93,6 +96,29 @@ export function TrainingSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {userRole === 'admin' && (
+          <SidebarGroup className="px-2">
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
+              {t('nav.admin', 'Admin')}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild className="h-10">
+                    <NavLink 
+                      to="/admin" 
+                      className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all ${getNavClass('/admin')} ${isRTL ? 'flex-row-reverse' : ''}`}
+                    >
+                      <Shield className="w-5 h-5 flex-shrink-0" />
+                      <span className="text-sm group-data-[collapsible=icon]:hidden">{t('nav.admin_panel', 'Admin Panel')}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   )
