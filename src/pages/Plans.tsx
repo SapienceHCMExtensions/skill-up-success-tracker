@@ -2,12 +2,12 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp, Edit, Trash2 } from "lucide-react"
 import { usePlans } from "@/hooks/usePlans"
 import { PlanDialog } from "@/components/plans/PlanDialog"
 import { PlanDetailsDialog } from "@/components/plans/PlanDetailsDialog"
 import { PlanCalendar } from "@/components/plans/PlanCalendar"
+import ContributorsTable from "@/components/ui/ruixen-contributors-table"
 import { supabase } from "@/integrations/supabase/client"
 
 export default function Plans() {
@@ -30,6 +30,43 @@ export default function Plans() {
     };
     checkUserRole();
   }, [plans]);
+
+  // Transform plans data for ContributorsTable
+  const transformedPlansData = plans.map((plan) => ({
+    id: plan.id,
+    title: plan.name,
+    repo: plan.description || "No description",
+    status: getStatusText(plan),
+    team: plan.department?.name || 'All Departments',
+    tech: `${plan.year} ${plan.quarter ? `Q${plan.quarter}` : ''}`,
+    createdAt: new Date(plan.created_at).toISOString().split('T')[0],
+    contributors: plan.plan_employees?.map((pe: any, index: number) => ({
+      name: pe.employee?.name || `Employee ${index + 1}`,
+      email: pe.employee?.email || `employee${index + 1}@company.com`,
+      avatar: `https://images.unsplash.com/photo-${507003211 + index}-f8f872a30a0c?w=40&h=40&fit=crop&crop=face`,
+      role: pe.required ? 'Required' : 'Optional',
+    })) || [],
+  }));
+
+  const getStatusText = (plan: any): "Active" | "Inactive" | "In Progress" | "Completed" | "Scheduled" => {
+    const currentDate = new Date();
+    if (plan.sessions && plan.sessions.length > 0) {
+      const hasActiveSessions = plan.sessions.some((session: any) => 
+        new Date(session.start_date) <= currentDate && 
+        new Date(session.end_date) >= currentDate
+      );
+      const allCompleted = plan.sessions.every((session: any) => 
+        new Date(session.end_date) < currentDate
+      );
+      
+      if (allCompleted) {
+        return "Completed";
+      } else if (hasActiveSessions) {
+        return "Active";
+      }
+    }
+    return "Scheduled";
+  };
 
   const getStatusBadge = (plan: any) => {
     // Simple status logic based on current date and sessions
@@ -98,83 +135,9 @@ export default function Plans() {
 
       {/* Training Plans Table */}
       {!loading && plans.length > 0 && (
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Training Plans</CardTitle>
-            <CardDescription>Manage and track your training plans</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Plan Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Assigned</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {plans.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell>{plan.department?.name || 'All Departments'}</TableCell>
-                    <TableCell>
-                      {plan.year} {plan.quarter && `Q${plan.quarter}`}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">
-                          {formatCurrency(plan.actual_cost || plan.estimated_cost || 0)}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {plan.actual_cost ? 'Actual' : 'Estimated'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{plan.plan_employees?.length || 0}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(plan)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <PlanDetailsDialog
-                          plan={plan}
-                          trigger={
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
-                        <PlanDialog
-                          plan={plan}
-                          trigger={
-                            <Button variant="ghost" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeletePlan(plan.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <div>
+          <ContributorsTable data={transformedPlansData} />
+        </div>
       )}
 
       {/* No Plans State */}
