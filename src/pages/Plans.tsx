@@ -31,23 +31,6 @@ export default function Plans() {
     checkUserRole();
   }, [plans]);
 
-  // Transform plans data for ContributorsTable
-  const transformedPlansData = plans.map((plan) => ({
-    id: plan.id,
-    title: plan.name,
-    repo: plan.description || "No description",
-    status: getStatusText(plan),
-    team: plan.department?.name || 'All Departments',
-    tech: `${plan.year} ${plan.quarter ? `Q${plan.quarter}` : ''}`,
-    createdAt: new Date(plan.created_at).toISOString().split('T')[0],
-    contributors: plan.plan_employees?.map((pe: any, index: number) => ({
-      name: pe.employee?.name || `Employee ${index + 1}`,
-      email: pe.employee?.email || `employee${index + 1}@company.com`,
-      avatar: `https://images.unsplash.com/photo-${507003211 + index}-f8f872a30a0c?w=40&h=40&fit=crop&crop=face`,
-      role: pe.required ? 'Required' : 'Optional',
-    })) || [],
-  }));
-
   const getStatusText = (plan: any): "Active" | "Inactive" | "In Progress" | "Completed" | "Scheduled" => {
     const currentDate = new Date();
     if (plan.sessions && plan.sessions.length > 0) {
@@ -67,6 +50,23 @@ export default function Plans() {
     }
     return "Scheduled";
   };
+
+  // Transform plans data for ContributorsTable
+  const transformedPlansData = plans.map((plan) => ({
+    id: plan.id,
+    title: plan.name,
+    repo: plan.description || "No description",
+    status: getStatusText(plan),
+    team: plan.department?.name || 'All Departments',
+    tech: `${plan.year} ${plan.quarter ? `Q${plan.quarter}` : ''}`,
+    createdAt: new Date(plan.created_at).toISOString().split('T')[0],
+    contributors: plan.plan_employees?.map((pe: any, index: number) => ({
+      name: pe.employee?.name || `Employee ${index + 1}`,
+      email: pe.employee?.email || `employee${index + 1}@company.com`,
+      avatar: `https://images.unsplash.com/photo-${507003211 + index}-f8f872a30a0c?w=40&h=40&fit=crop&crop=face`,
+      role: pe.required ? 'Required' : 'Optional',
+    })) || [],
+  }));
 
   const getStatusBadge = (plan: any) => {
     // Simple status logic based on current date and sessions
