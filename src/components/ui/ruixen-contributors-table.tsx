@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { Eye, Edit, Trash2 } from "lucide-react";
 
 type Contributor = {
   name: string;
@@ -57,13 +58,21 @@ const allColumns = [
   "Created At",
   "Contributors",
   "Status",
+  "Actions",
 ] as const;
+
+type ActionHandlers = {
+  onView?: (project: Project) => void;
+  onEdit?: (project: Project) => void;
+  onDelete?: (project: Project) => void;
+};
 
 interface ContributorsTableProps {
   data?: Project[];
+  actions?: ActionHandlers;
 }
 
-function ContributorsTable({ data = [] }: ContributorsTableProps) {
+function ContributorsTable({ data = [], actions }: ContributorsTableProps) {
   const [visibleColumns, setVisibleColumns] = useState<string[]>([...allColumns]);
   const [statusFilter, setStatusFilter] = useState("");
   const [techFilter, setTechFilter] = useState("");
@@ -131,6 +140,7 @@ function ContributorsTable({ data = [] }: ContributorsTableProps) {
             {visibleColumns.includes("Created At") && <TableHead className="w-[120px]">Created At</TableHead>}
             {visibleColumns.includes("Contributors") && <TableHead className="w-[150px]">Contributors</TableHead>}
             {visibleColumns.includes("Status") && <TableHead className="w-[100px]">Status</TableHead>}
+            {visibleColumns.includes("Actions") && <TableHead className="w-[120px]">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -192,6 +202,42 @@ function ContributorsTable({ data = [] }: ContributorsTableProps) {
                     >
                       {project.status}
                     </Badge>
+                  </TableCell>
+                )}
+                {visibleColumns.includes("Actions") && actions && (
+                  <TableCell className="whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {actions.onView && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => actions.onView!(project)}
+                          className="hover:bg-muted"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {actions.onEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => actions.onEdit!(project)}
+                          className="hover:bg-muted"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      )}
+                      {actions.onDelete && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => actions.onDelete!(project)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 )}
               </TableRow>

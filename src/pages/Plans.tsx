@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client"
 export default function Plans() {
   const { plans, loading, deletePlan } = usePlans();
   const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedPlanForView, setSelectedPlanForView] = useState<any>(null);
+  const [selectedPlanForEdit, setSelectedPlanForEdit] = useState<any>(null);
 
   // Debug: Log user role and plans data
   useEffect(() => {
@@ -89,9 +91,24 @@ export default function Plans() {
     return <Badge variant="secondary">Scheduled</Badge>;
   }
 
-  const handleDeletePlan = async (planId: string) => {
+  // Action handlers for the table
+  const handleViewPlan = (project: any) => {
+    const originalPlan = plans.find(p => p.id === project.id);
+    if (originalPlan) {
+      setSelectedPlanForView(originalPlan);
+    }
+  };
+
+  const handleEditPlan = (project: any) => {
+    const originalPlan = plans.find(p => p.id === project.id);
+    if (originalPlan) {
+      setSelectedPlanForEdit(originalPlan);
+    }
+  };
+
+  const handleDeletePlan = async (project: any) => {
     if (confirm('Are you sure you want to delete this training plan?')) {
-      await deletePlan(planId);
+      await deletePlan(project.id);
     }
   };
 
@@ -136,7 +153,14 @@ export default function Plans() {
       {/* Training Plans Table */}
       {!loading && plans.length > 0 && (
         <div>
-          <ContributorsTable data={transformedPlansData} />
+          <ContributorsTable 
+            data={transformedPlansData}
+            actions={{
+              onView: handleViewPlan,
+              onEdit: handleEditPlan,
+              onDelete: handleDeletePlan,
+            }}
+          />
         </div>
       )}
 
@@ -210,6 +234,32 @@ export default function Plans() {
 
       {/* Calendar Modal */}
       <PlanCalendar isOpen={showCalendar} onClose={() => setShowCalendar(false)} />
+      
+      {/* Plan Details Dialog */}
+      {selectedPlanForView && (
+        <PlanDetailsDialog
+          plan={selectedPlanForView}
+          trigger={
+            <Button 
+              style={{ display: 'none' }} 
+              onClick={() => setSelectedPlanForView(null)}
+            />
+          }
+        />
+      )}
+      
+      {/* Plan Edit Dialog */}
+      {selectedPlanForEdit && (
+        <PlanDialog
+          plan={selectedPlanForEdit}
+          trigger={
+            <Button 
+              style={{ display: 'none' }} 
+              onClick={() => setSelectedPlanForEdit(null)}
+            />
+          }
+        />
+      )}
     </div>
   )
 }
