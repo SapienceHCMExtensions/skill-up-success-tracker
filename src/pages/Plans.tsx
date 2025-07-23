@@ -3,16 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp, Edit, Trash2 } from "lucide-react"
+import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp, Edit, Trash2, ChevronUp, ChevronDown } from "lucide-react"
 import { usePlans } from "@/hooks/usePlans"
 import { PlanDialog } from "@/components/plans/PlanDialog"
 import { PlanDetailsDialog } from "@/components/plans/PlanDetailsDialog"
 import { PlanCalendar } from "@/components/plans/PlanCalendar"
 import { supabase } from "@/integrations/supabase/client"
 
+type SortField = 'name' | 'department' | 'year' | 'budget' | 'assigned' | 'status';
+type SortDirection = 'asc' | 'desc';
+
 export default function Plans() {
   const { plans, loading, deletePlan } = usePlans();
   const [showCalendar, setShowCalendar] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // Debug: Log user role and plans data
   useEffect(() => {
@@ -65,6 +70,88 @@ export default function Plans() {
     }).format(amount);
   };
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getStatusText = (plan: any) => {
+    const currentDate = new Date();
+    if (plan.sessions && plan.sessions.length > 0) {
+      const hasActiveSessions = plan.sessions.some((session: any) => 
+        new Date(session.start_date) <= currentDate && 
+        new Date(session.end_date) >= currentDate
+      );
+      const allCompleted = plan.sessions.every((session: any) => 
+        new Date(session.end_date) < currentDate
+      );
+      
+      if (allCompleted) return 'Completed';
+      if (hasActiveSessions) return 'Active';
+    }
+    return 'Scheduled';
+  };
+
+  const sortedPlans = [...plans].sort((a, b) => {
+    let aValue: any, bValue: any;
+    
+    switch (sortField) {
+      case 'name':
+        aValue = a.name?.toLowerCase() || '';
+        bValue = b.name?.toLowerCase() || '';
+        break;
+      case 'department':
+        aValue = a.department?.name?.toLowerCase() || 'all departments';
+        bValue = b.department?.name?.toLowerCase() || 'all departments';
+        break;
+      case 'year':
+        aValue = a.year || 0;
+        bValue = b.year || 0;
+        break;
+      case 'budget':
+        aValue = a.actual_cost || a.estimated_cost || 0;
+        bValue = b.actual_cost || b.estimated_cost || 0;
+        break;
+      case 'assigned':
+        aValue = a.plan_employees?.length || 0;
+        bValue = b.plan_employees?.length || 0;
+        break;
+      case 'status':
+        aValue = getStatusText(a);
+        bValue = getStatusText(b);
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const SortableTableHead = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        <div className="flex flex-col">
+          <ChevronUp 
+            className={`w-3 h-3 ${sortField === field && sortDirection === 'asc' ? 'text-primary' : 'text-muted-foreground/50'}`} 
+          />
+          <ChevronDown 
+            className={`w-3 h-3 -mt-1 ${sortField === field && sortDirection === 'desc' ? 'text-primary' : 'text-muted-foreground/50'}`} 
+          />
+        </div>
+      </div>
+    </TableHead>
+  );
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -107,17 +194,17 @@ export default function Plans() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Plan Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Assigned</TableHead>
-                  <TableHead>Status</TableHead>
+                  <SortableTableHead field="name">Plan Name</SortableTableHead>
+                  <SortableTableHead field="department">Department</SortableTableHead>
+                  <SortableTableHead field="year">Period</SortableTableHead>
+                  <SortableTableHead field="budget">Budget</SortableTableHead>
+                  <SortableTableHead field="assigned">Assigned</SortableTableHead>
+                  <SortableTableHead field="status">Status</SortableTableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {plans.map((plan) => (
+                {sortedPlans.map((plan) => (
                   <TableRow key={plan.id}>
                     <TableCell className="font-medium">{plan.name}</TableCell>
                     <TableCell>{plan.department?.name || 'All Departments'}</TableCell>
