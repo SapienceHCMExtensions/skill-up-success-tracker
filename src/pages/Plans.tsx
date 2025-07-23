@@ -7,7 +7,7 @@ import { Calendar, Plus, Users, Clock, DollarSign, Eye, Settings, TrendingUp, Ed
 import { usePlans } from "@/hooks/usePlans"
 import { PlanDialog } from "@/components/plans/PlanDialog"
 import { PlanDetailsDialog } from "@/components/plans/PlanDetailsDialog"
-import { PlanCalendar } from "@/components/plans/PlanCalendar"
+import { ModernPlanCalendar } from "@/components/plans/ModernPlanCalendar"
 import { supabase } from "@/integrations/supabase/client"
 
 type SortField = 'name' | 'department' | 'year' | 'budget' | 'assigned' | 'status';
@@ -333,7 +333,7 @@ export default function Plans() {
       )}
 
       {/* Calendar Modal */}
-      <PlanCalendar isOpen={showCalendar} onClose={() => setShowCalendar(false)} />
+      <ModernPlanCalendar isOpen={showCalendar} onClose={() => setShowCalendar(false)} />
     </div>
   )
 }
