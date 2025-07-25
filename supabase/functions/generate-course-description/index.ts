@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
+console.log('Gemini API Key status:', geminiApiKey ? 'Present' : 'Missing');
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -14,7 +16,18 @@ serve(async (req) => {
   }
 
   try {
+    if (!geminiApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Gemini API key not configured' }), 
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const { title, code, providerType } = await req.json();
+    console.log('Request data:', { title, code, providerType });
 
     if (!title || !code || !providerType) {
       return new Response(
