@@ -41,21 +41,17 @@ Create a comprehensive course description that includes:
 
 Keep the description professional, engaging, and between 100-200 words. Focus on the value and benefits participants will receive.`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are an expert training course designer who creates compelling and informative course descriptions for corporate training programs. ${prompt}`
-              }
-            ]
-          }
-        ],
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 300,
@@ -64,10 +60,17 @@ Keep the description professional, engaging, and between 100-200 words. Focus on
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Gemini API error:', errorData);
       throw new Error(`Gemini API error: ${response.statusText}`);
     }
 
     const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error('Invalid response from Gemini API');
+    }
+    
     const description = data.candidates[0].content.parts[0].text.trim();
 
     return new Response(
