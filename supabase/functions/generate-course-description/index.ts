@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,32 +41,34 @@ Create a comprehensive course description that includes:
 
 Keep the description professional, engaging, and between 100-200 words. Focus on the value and benefits participants will receive.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert training course designer who creates compelling and informative course descriptions for corporate training programs.' 
-          },
-          { role: 'user', content: prompt }
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are an expert training course designer who creates compelling and informative course descriptions for corporate training programs. ${prompt}`
+              }
+            ]
+          }
         ],
-        temperature: 0.7,
-        max_tokens: 300,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 300,
+        }
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      throw new Error(`Gemini API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    const description = data.choices[0].message.content.trim();
+    const description = data.candidates[0].content.parts[0].text.trim();
 
     return new Response(
       JSON.stringify({ description }), 
