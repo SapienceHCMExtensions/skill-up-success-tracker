@@ -6,8 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Sparkles } from 'lucide-react';
 import { useCourses } from '@/hooks/useCourses';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Course = Tables<'courses'>;
@@ -34,6 +36,7 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
   });
 
   const [newCompetency, setNewCompetency] = useState('');
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   const addCompetency = () => {
     if (newCompetency.trim() && !formData.competencies.includes(newCompetency.trim())) {
@@ -50,6 +53,34 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
       ...prev,
       competencies: prev.competencies.filter(c => c !== competency)
     }));
+  };
+
+  const generateDescription = async () => {
+    if (!formData.title.trim() || !formData.code.trim() || !formData.provider_type) {
+      toast.error('Please fill in Course Title, Course Code, and Provider Type first');
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-course-description', {
+        body: {
+          title: formData.title,
+          code: formData.code,
+          providerType: formData.provider_type
+        }
+      });
+
+      if (error) throw error;
+
+      setFormData(prev => ({ ...prev, description: data.description }));
+      toast.success('Course description generated successfully!');
+    } catch (error) {
+      console.error('Error generating description:', error);
+      toast.error('Failed to generate description. Please try again.');
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,7 +169,20 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
           </div>
 
           <div>
-            <Label htmlFor="description">Description</Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label htmlFor="description">Description</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateDescription}
+                disabled={generatingDescription || !formData.title.trim() || !formData.code.trim() || !formData.provider_type}
+                className="text-xs"
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                {generatingDescription ? 'Generating...' : 'Generate AI Description'}
+              </Button>
+            </div>
             <Textarea
               id="description"
               value={formData.description || ''}
