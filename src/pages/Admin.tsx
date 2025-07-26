@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Shield, Key, Languages, Users } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { Navigate, Link } from "react-router-dom"
+import { SecurityAuditDashboard } from "@/components/security/SecurityAuditDashboard"
 
 export default function Admin() {
   const { userRole } = useAuth()
@@ -79,6 +80,10 @@ export default function Admin() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+      
+      <div className="mt-8">
+        <SecurityAuditDashboard />
       </div>
     </div>
   )
