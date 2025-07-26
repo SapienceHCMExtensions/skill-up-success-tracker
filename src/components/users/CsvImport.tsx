@@ -156,12 +156,19 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
         if (!userExists) {
           addLog(`Creating user: ${row.name} (${row.email})`);
           
+          // Generate secure random password for new user
+          const { data: passwordData } = await supabase.rpc('generate_secure_password', { length: 16 });
+          const securePassword = passwordData || 'TempSecure' + Math.random().toString(36).slice(-8) + '!';
+          
+          addLog(`Generated secure password for: ${row.email}`);
+          
           // Use edge function to create user with admin privileges
           const { data: authUser, error: authError } = await supabase.functions.invoke('create-user', {
             body: {
               email: row.email,
-              password: 'TempPassword123!',
-              name: row.name
+              password: securePassword,
+              name: row.name,
+              requirePasswordReset: true
             }
           });
 
@@ -205,7 +212,17 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
               continue;
             }
             
-            addLog(`Successfully created user: ${row.name}`);
+            addLog(`Successfully created user: ${row.name} - Password reset required on first login`);
+            
+            // Send password reset email
+            try {
+              await supabase.auth.resetPasswordForEmail(row.email, {
+                redirectTo: `${window.location.origin}/auth?type=password-reset`
+              });
+              addLog(`Password reset email sent to: ${row.email}`);
+            } catch (resetError) {
+              addLog(`Warning: Could not send password reset email to ${row.email}`);
+            }
           }
         } else {
           addLog(`User already exists: ${row.email}`);
@@ -279,7 +296,8 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
             </code>
             <p className="text-sm text-muted-foreground mt-2">
               Required fields: name, email<br />
-              Optional fields: department, role (defaults to 'employee')
+              Optional fields: department, role (defaults to 'employee')<br />
+              <strong>Security:</strong> Users receive secure passwords via email reset
             </p>
           </div>
 

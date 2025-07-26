@@ -39,11 +39,28 @@ serve(async (req) => {
       );
     }
 
+    // Sanitize inputs to prevent injection attacks
+    const sanitizedTitle = title.toString().trim().substring(0, 200)
+    const sanitizedCode = code.toString().trim().substring(0, 50)
+    const sanitizedProviderType = providerType.toString().trim().substring(0, 50)
+
+    // Validate provider type against allowed values
+    const allowedProviderTypes = ['internal', 'external', 'online', 'hybrid']
+    if (!allowedProviderTypes.includes(sanitizedProviderType.toLowerCase())) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid provider type' }), 
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const prompt = `Generate a professional course description for a training course with the following details:
     
-Course Title: ${title}
-Course Code: ${code}
-Provider Type: ${providerType}
+Course Title: ${sanitizedTitle}
+Course Code: ${sanitizedCode}
+Provider Type: ${sanitizedProviderType}
 
 Create a comprehensive course description that includes:
 - Overview of what the course covers

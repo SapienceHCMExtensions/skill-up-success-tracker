@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('kannan.srinivasan.at@outlook.com'); // Pre-fill for testing
+  const [email, setEmail] = useState(''); // Removed hardcoded email for security
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);

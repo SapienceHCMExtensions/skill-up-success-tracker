@@ -866,6 +866,36 @@ export type Database = {
           },
         ]
       }
+      security_audit_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       session_enrollments: {
         Row: {
           completion_date: string | null
@@ -1294,6 +1324,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_secure_password: {
+        Args: { length?: number }
+        Returns: string
+      }
       get_employee_id: {
         Args: { _user_id: string }
         Returns: string

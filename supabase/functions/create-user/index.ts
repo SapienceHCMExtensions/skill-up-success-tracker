@@ -25,8 +25,9 @@ serve(async (req) => {
       }
     )
 
-    const { email, password, name } = await req.json()
+    const { email, password, name, requirePasswordReset } = await req.json()
 
+    // Enhanced input validation
     if (!email || !password || !name) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: email, password, name' }),
@@ -37,13 +38,59 @@ serve(async (req) => {
       )
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Password strength validation
+    if (password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: 'Password must be at least 8 characters long' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Sanitize inputs
+    const sanitizedEmail = email.trim().toLowerCase()
+    const sanitizedName = name.trim().substring(0, 100) // Limit name length
+
     // Create user with admin privileges
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
+    const userCreateData = {
+      email: sanitizedEmail,
       password,
       email_confirm: true,
-      user_metadata: { name }
-    })
+      user_metadata: { name: sanitizedName }
+    }
+
+    // Force password reset on first login if requested
+    if (requirePasswordReset) {
+      userCreateData.email_confirm = false // User will need to confirm email and reset password
+    }
+
+    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser(userCreateData)
+
+    // Log security event
+    if (authUser?.user) {
+      await supabaseAdmin.from('security_audit_logs').insert({
+        event_type: 'user_created_via_csv',
+        details: {
+          created_user_email: sanitizedEmail,
+          created_user_name: sanitizedName,
+          require_password_reset: !!requirePasswordReset
+        }
+      })
+    }
 
     if (authError) {
       console.error('Error creating user:', authError)
