@@ -10,7 +10,8 @@ import {
   Clock,
   Languages,
   FileText,
-  Shield
+  Shield,
+  Workflow
 } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
@@ -36,6 +37,10 @@ const navigationItems = [
   { title: "nav.evaluations", url: "/evaluations", icon: GraduationCap },
   { title: "nav.costs", url: "/costs", icon: DollarSign },
   { title: "nav.alerts", url: "/alerts", icon: Bell },
+]
+
+const adminItems = [
+  { title: "Workflows", url: "/workflows", icon: Workflow, adminOnly: true },
 ]
 
 export function TrainingSidebar() {
@@ -94,6 +99,31 @@ export function TrainingSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {userRole === 'admin' && (
+          <SidebarGroup className="px-2">
+            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground mb-2">
+              Admin
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="h-10">
+                      <NavLink 
+                        to={item.url} 
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all ${getNavClass(item.url)} ${isRTL ? 'flex-row-reverse' : ''}`}
+                      >
+                        <item.icon className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
       </SidebarContent>
     </Sidebar>

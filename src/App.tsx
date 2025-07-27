@@ -20,6 +20,7 @@ import TranslationManagement from "./pages/TranslationManagement";
 import TrainingRequests from "./pages/TrainingRequests";
 import Admin from "./pages/Admin";
 import GeminiConfig from "./pages/GeminiConfig";
+import Workflows from "./pages/Workflows";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/translations" element={<ProtectedRoute><TrainingLayout><TranslationManagement /></TrainingLayout></ProtectedRoute>} />
             <Route path="/training-requests" element={<ProtectedRoute><TrainingLayout><TrainingRequests /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><TrainingLayout><Admin /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/workflows" element={<ProtectedRoute><TrainingLayout><Workflows /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><GeminiConfig /></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
