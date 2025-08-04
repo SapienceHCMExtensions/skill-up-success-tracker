@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Shield, Key, Languages, Users } from "lucide-react"
+import { Shield, Key, Languages, Users, Workflow } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { Navigate, Link } from "react-router-dom"
 import { SecurityAuditDashboard } from "@/components/security/SecurityAuditDashboard"
@@ -76,6 +76,25 @@ export default function Admin() {
             <Button asChild className="w-full">
               <Link to="/users">
                 Manage Users
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Workflow className="w-6 h-6 text-primary" />
+              Workflows
+            </CardTitle>
+            <CardDescription>
+              Configure training request workflows and approval processes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/workflows">
+                Manage Workflows
               </Link>
             </Button>
           </CardContent>
