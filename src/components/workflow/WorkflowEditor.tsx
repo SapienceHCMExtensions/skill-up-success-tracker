@@ -13,6 +13,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import { WorkflowToolbar } from './WorkflowToolbar';
+import { WorkflowNodeEditor } from './WorkflowNodeEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,14 +30,18 @@ import EndNode from './nodes/EndNode';
 
 import type { WorkflowDefinition, WorkflowNode, WorkflowEdge } from '@/types/workflow';
 
-const nodeTypes = {
-  start: StartNode,
-  approval: ApprovalNode,
-  condition: ConditionNode,
-  notification: NotificationNode,
-  action: ActionNode,
-  end: EndNode,
-};
+const createNodeTypes = (
+  onEdit: (nodeId: string) => void,
+  onDelete: (nodeId: string) => void,
+  onDuplicate: (nodeId: string) => void
+) => ({
+  start: (props: any) => <StartNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  approval: (props: any) => <ApprovalNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  condition: (props: any) => <ConditionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  notification: (props: any) => <NotificationNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  action: (props: any) => <ActionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  end: (props: any) => <EndNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+});
 
 interface WorkflowEditorProps {
   workflow?: WorkflowDefinition;
@@ -60,6 +65,8 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
   const [workflowCategory, setWorkflowCategory] = useState<WorkflowDefinition['category']>(
     workflow?.category || 'training_request'
   );
+  const [editingNode, setEditingNode] = useState<WorkflowNode | null>(null);
+  const [showNodeEditor, setShowNodeEditor] = useState(false);
   
   const nodeIdCounter = useRef(1);
 
@@ -126,7 +133,56 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
     toast.info('Test run functionality coming soon');
   }, []);
 
+  const handleEditNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setEditingNode(node);
+      setShowNodeEditor(true);
+    }
+  }, [nodes]);
+
+  const handleDeleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    toast.success('Node deleted');
+  }, [setNodes, setEdges]);
+
+  const handleDuplicateNode = useCallback((nodeId: string) => {
+    const nodeToDuplicate = nodes.find((node) => node.id === nodeId);
+    if (!nodeToDuplicate) return;
+
+    const newId = `${nodeToDuplicate.type}-${nodeIdCounter.current++}`;
+    const newNode: WorkflowNode = {
+      ...nodeToDuplicate,
+      id: newId,
+      position: {
+        x: nodeToDuplicate.position.x + 100,
+        y: nodeToDuplicate.position.y + 50,
+      },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+    toast.success('Node duplicated');
+  }, [nodes, setNodes]);
+
+  const handleSaveNodeConfig = useCallback((updatedNode: WorkflowNode) => {
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === updatedNode.id ? updatedNode : node
+      )
+    );
+    setShowNodeEditor(false);
+    setEditingNode(null);
+    toast.success('Node configuration saved');
+  }, [setNodes]);
+
+  const handleCancelNodeEdit = useCallback(() => {
+    setShowNodeEditor(false);
+    setEditingNode(null);
+  }, []);
+
   const canSave = workflowName.trim().length > 0 && nodes.length > 0;
+  const nodeTypes = createNodeTypes(handleEditNode, handleDeleteNode, handleDuplicateNode);
 
   return (
     <div className="h-full flex">
@@ -211,6 +267,14 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         </ReactFlow>
       </div>
+
+      {/* Node Editor Dialog */}
+      <WorkflowNodeEditor
+        node={editingNode}
+        isOpen={showNodeEditor}
+        onClose={handleCancelNodeEdit}
+        onSave={handleSaveNodeConfig}
+      />
     </div>
   );
 }
