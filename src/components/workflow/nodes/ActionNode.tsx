@@ -17,9 +17,12 @@ interface ActionNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function ActionNode({ id, data, selected, onEdit, onDelete, onDuplicate }: ActionNodeProps) {
+function ActionNode({ id, data, selected, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: ActionNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -28,6 +31,9 @@ function ActionNode({ id, data, selected, onEdit, onDelete, onDuplicate }: Actio
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className={`px-4 py-3 rounded-lg bg-orange-100 border-2 min-w-[140px] ${
         selected ? 'border-orange-500' : 'border-orange-300'

@@ -30,17 +30,20 @@ import EndNode from './nodes/EndNode';
 
 import type { WorkflowDefinition, WorkflowNode, WorkflowEdge } from '@/types/workflow';
 
-const createNodeTypes = (
-  onEdit: (nodeId: string) => void,
-  onDelete: (nodeId: string) => void,
-  onDuplicate: (nodeId: string) => void
-) => ({
-  start: (props: any) => <StartNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
-  approval: (props: any) => <ApprovalNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
-  condition: (props: any) => <ConditionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
-  notification: (props: any) => <NotificationNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
-  action: (props: any) => <ActionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
-  end: (props: any) => <EndNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} />,
+  const createNodeTypes = (
+    onEdit: (nodeId: string) => void,
+    onDelete: (nodeId: string) => void,
+    onDuplicate: (nodeId: string) => void,
+    onConfigure: (nodeId: string) => void,
+    onTest: (nodeId: string) => void,
+    onPreview: (nodeId: string) => void
+  ) => ({
+  start: (props: any) => <StartNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
+  end: (props: any) => <EndNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
+  approval: (props: any) => <ApprovalNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
+  condition: (props: any) => <ConditionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
+  notification: (props: any) => <NotificationNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
+  action: (props: any) => <ActionNode {...props} onEdit={onEdit} onDelete={onDelete} onDuplicate={onDuplicate} onConfigure={onConfigure} onTest={onTest} onPreview={onPreview} />,
 });
 
 interface WorkflowEditorProps {
@@ -181,8 +184,39 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
     setEditingNode(null);
   }, []);
 
+  const handleConfigureNode = useCallback((nodeId: string) => {
+    const nodeToEdit = nodes.find((node) => node.id === nodeId);
+    if (nodeToEdit) {
+      setEditingNode(nodeToEdit);
+      setShowNodeEditor(true);
+    }
+  }, [nodes]);
+
+  const handleTestNode = useCallback((nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (node) {
+      // Simulate testing the node
+      toast.success(`Testing ${node.type} node: ${node.data.label}`);
+    }
+  }, [nodes]);
+
+  const handlePreviewNode = useCallback((nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (node) {
+      // Simulate previewing changes
+      toast.info(`Previewing changes for ${node.type} node: ${node.data.label}`);
+    }
+  }, [nodes]);
+
   const canSave = workflowName.trim().length > 0 && nodes.length > 0;
-  const nodeTypes = createNodeTypes(handleEditNode, handleDeleteNode, handleDuplicateNode);
+  const nodeTypes = createNodeTypes(
+    handleEditNode, 
+    handleDeleteNode, 
+    handleDuplicateNode, 
+    handleConfigureNode,
+    handleTestNode,
+    handlePreviewNode
+  );
 
   return (
     <div className="h-full flex">

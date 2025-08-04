@@ -12,9 +12,12 @@ interface EndNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function EndNode({ id, data, onEdit, onDelete, onDuplicate }: EndNodeProps) {
+function EndNode({ id, data, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: EndNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -22,6 +25,9 @@ function EndNode({ id, data, onEdit, onDelete, onDuplicate }: EndNodeProps) {
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className="px-4 py-3 rounded-lg bg-red-100 border-2 border-red-300 min-w-[120px]">
         <div className="flex items-center gap-2">

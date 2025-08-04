@@ -18,9 +18,12 @@ interface ConditionNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function ConditionNode({ id, data, selected, onEdit, onDelete, onDuplicate }: ConditionNodeProps) {
+function ConditionNode({ id, data, selected, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: ConditionNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -29,6 +32,9 @@ function ConditionNode({ id, data, selected, onEdit, onDelete, onDuplicate }: Co
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className={`px-4 py-3 rounded-lg bg-blue-100 border-2 min-w-[140px] ${
         selected ? 'border-blue-500' : 'border-blue-300'

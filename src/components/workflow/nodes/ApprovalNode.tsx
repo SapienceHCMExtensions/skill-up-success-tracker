@@ -18,9 +18,12 @@ interface ApprovalNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function ApprovalNode({ id, data, selected, onEdit, onDelete, onDuplicate }: ApprovalNodeProps) {
+function ApprovalNode({ id, data, selected, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: ApprovalNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -29,6 +32,9 @@ function ApprovalNode({ id, data, selected, onEdit, onDelete, onDuplicate }: App
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className={`px-4 py-3 rounded-lg bg-yellow-100 border-2 min-w-[140px] ${
         selected ? 'border-yellow-500' : 'border-yellow-300'

@@ -12,9 +12,12 @@ interface StartNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function StartNode({ id, data, onEdit, onDelete, onDuplicate }: StartNodeProps) {
+function StartNode({ id, data, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: StartNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -22,6 +25,9 @@ function StartNode({ id, data, onEdit, onDelete, onDuplicate }: StartNodeProps) 
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className="px-4 py-3 rounded-lg bg-green-100 border-2 border-green-300 min-w-[120px]">
         <div className="flex items-center gap-2">

@@ -17,6 +17,8 @@ interface NodeContextMenuProps {
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
   onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
 export function NodeContextMenu({
@@ -28,6 +30,8 @@ export function NodeContextMenu({
   onDelete,
   onDuplicate,
   onConfigure,
+  onTest,
+  onPreview,
 }: NodeContextMenuProps) {
   const handleEdit = () => {
     onEdit?.(nodeId);
@@ -45,8 +49,65 @@ export function NodeContextMenu({
     onConfigure?.(nodeId);
   };
 
+  const handleTest = () => {
+    onTest?.(nodeId);
+  };
+
+  const handlePreview = () => {
+    onPreview?.(nodeId);
+  };
+
   const canEdit = nodeType !== 'start' && nodeType !== 'end';
   const canDelete = nodeType !== 'start';
+  
+  // Node-specific menu items
+  const getNodeSpecificItems = () => {
+    switch (nodeType) {
+      case 'condition':
+        return [
+          <ContextMenuItem key="configure" onClick={handleConfigure} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configure Condition
+          </ContextMenuItem>,
+          <ContextMenuItem key="test" onClick={handleTest} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Test Condition
+          </ContextMenuItem>
+        ];
+      case 'action':
+        return [
+          <ContextMenuItem key="configure" onClick={handleConfigure} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configure Action
+          </ContextMenuItem>,
+          <ContextMenuItem key="preview" onClick={handlePreview} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Preview Changes
+          </ContextMenuItem>
+        ];
+      case 'notification':
+        return [
+          <ContextMenuItem key="configure" onClick={handleConfigure} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configure Recipients
+          </ContextMenuItem>
+        ];
+      case 'approval':
+        return [
+          <ContextMenuItem key="configure" onClick={handleConfigure} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configure Approver
+          </ContextMenuItem>
+        ];
+      default:
+        return hasConfig ? [
+          <ContextMenuItem key="configure" onClick={handleConfigure} className="flex items-center gap-2">
+            <Settings className="w-4 h-4" />
+            Configure
+          </ContextMenuItem>
+        ] : [];
+    }
+  };
 
   return (
     <ContextMenu>
@@ -61,19 +122,15 @@ export function NodeContextMenu({
           </ContextMenuItem>
         )}
         
-        {hasConfig && (
-          <ContextMenuItem onClick={handleConfigure} className="flex items-center gap-2">
-            <Settings className="w-4 h-4" />
-            Configure
-          </ContextMenuItem>
-        )}
+        {/* Node-specific configuration items */}
+        {getNodeSpecificItems()}
         
         <ContextMenuItem onClick={handleDuplicate} className="flex items-center gap-2">
           <Copy className="w-4 h-4" />
           Duplicate Node
         </ContextMenuItem>
         
-        {(canEdit || hasConfig) && <ContextMenuSeparator />}
+        {(canEdit || hasConfig || getNodeSpecificItems().length > 0) && <ContextMenuSeparator />}
         
         {canDelete && (
           <ContextMenuItem 

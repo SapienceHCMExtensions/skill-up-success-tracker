@@ -17,9 +17,12 @@ interface NotificationNodeProps {
   onEdit?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
+  onConfigure?: (nodeId: string) => void;
+  onTest?: (nodeId: string) => void;
+  onPreview?: (nodeId: string) => void;
 }
 
-function NotificationNode({ id, data, selected, onEdit, onDelete, onDuplicate }: NotificationNodeProps) {
+function NotificationNode({ id, data, selected, onEdit, onDelete, onDuplicate, onConfigure, onTest, onPreview }: NotificationNodeProps) {
   return (
     <NodeContextMenu
       nodeId={id}
@@ -28,6 +31,9 @@ function NotificationNode({ id, data, selected, onEdit, onDelete, onDuplicate }:
       onEdit={onEdit}
       onDelete={onDelete}
       onDuplicate={onDuplicate}
+      onConfigure={onConfigure}
+      onTest={onTest}
+      onPreview={onPreview}
     >
       <div className={`px-4 py-3 rounded-lg bg-purple-100 border-2 min-w-[140px] ${
         selected ? 'border-purple-500' : 'border-purple-300'
