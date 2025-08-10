@@ -1319,6 +1319,157 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_definitions: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          definition: Json
+          description: string | null
+          id: string
+          name: string
+          status: string
+          trigger_entity: string | null
+          trigger_event: string | null
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          trigger_entity?: string | null
+          trigger_event?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          trigger_entity?: string | null
+          trigger_event?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      workflow_instances: {
+        Row: {
+          created_at: string
+          current_node_id: string | null
+          definition_version: number
+          entity_id: string
+          entity_type: string
+          id: string
+          last_error: string | null
+          started_by: string | null
+          status: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_node_id?: string | null
+          definition_version: number
+          entity_id: string
+          entity_type: string
+          id?: string
+          last_error?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string
+          current_node_id?: string | null
+          definition_version?: number
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          last_error?: string | null
+          started_by?: string | null
+          status?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_instances_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_tasks: {
+        Row: {
+          assigned_to_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_to_user: string | null
+          completed_at: string | null
+          created_at: string
+          due_at: string | null
+          id: string
+          instance_id: string
+          node_id: string
+          node_type: string
+          result: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_to_user?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          instance_id: string
+          node_id: string
+          node_type: string
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_to_user?: string | null
+          completed_at?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          instance_id?: string
+          node_id?: string
+          node_type?: string
+          result?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_tasks_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

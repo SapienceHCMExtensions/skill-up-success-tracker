@@ -31,6 +31,7 @@ export default function Workflows() {
     deleteWorkflow,
     activateWorkflow,
     deactivateWorkflow,
+    applyWorkflowToEntity,
   } = useWorkflows();
 
   const handleCreateNew = () => {
@@ -173,6 +174,25 @@ export default function Workflows() {
                         <Play className="w-4 h-4" />
                       </Button>
                     )}
+
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const entityType = window.prompt('Entity type (e.g., training_requests)')?.trim();
+                        const entityId = window.prompt('Entity ID (UUID)')?.trim();
+                        if (entityType && entityId) {
+                          try {
+                            await applyWorkflowToEntity(workflow.id, entityType, entityId);
+                          } catch (e) {
+                            // toast handled in hook
+                          }
+                        }
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
