@@ -8,6 +8,7 @@ import {
   useEdgesState,
   addEdge,
   Connection,
+  Edge,
   BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -18,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 // Import custom nodes
@@ -71,7 +73,15 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
   const [editingNode, setEditingNode] = useState<WorkflowNode | null>(null);
   const [showNodeEditor, setShowNodeEditor] = useState(false);
   
-  const nodeIdCounter = useRef(1);
+const nodeIdCounter = useRef(1);
+
+  // Edge context menu state
+  const [edgeMenu, setEdgeMenu] = useState<{ open: boolean; x: number; y: number; edgeId: string | null }>({
+    open: false,
+    x: 0,
+    y: 0,
+    edgeId: null,
+  });
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
@@ -207,6 +217,22 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
       toast.info(`Previewing changes for ${node.type} node: ${node.data.label}`);
     }
   }, [nodes]);
+  
+  // Edge context menu handlers
+  const handleEdgeContextMenu = useCallback((event: React.MouseEvent, edge: Edge | any) => {
+    event.preventDefault();
+    setEdgeMenu({ open: true, x: event.clientX, y: event.clientY, edgeId: edge?.id ?? null });
+  }, []);
+
+  const handleCloseEdgeMenu = useCallback(() => {
+    setEdgeMenu((prev) => ({ ...prev, open: false, edgeId: null }));
+  }, []);
+
+  const handleDeleteEdge = useCallback(() => {
+    setEdges((eds) => eds.filter((e) => e.id !== edgeMenu.edgeId));
+    setEdgeMenu((prev) => ({ ...prev, open: false, edgeId: null }));
+    toast.success('Connection deleted');
+  }, [setEdges, edgeMenu.edgeId]);
 
   const canSave = workflowName.trim().length > 0 && nodes.length > 0;
   const nodeTypes = createNodeTypes(
@@ -285,13 +311,14 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
       </div>
 
       {/* Main Canvas */}
-      <div className="flex-1 h-full">
+      <div className="relative flex-1 h-full">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onEdgeContextMenu={handleEdgeContextMenu}
           nodeTypes={nodeTypes}
           fitView
           className="bg-background"
@@ -300,6 +327,31 @@ export function WorkflowEditor({ workflow, onSave, onCancel }: WorkflowEditorPro
           <MiniMap />
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         </ReactFlow>
+
+        {edgeMenu.open && (
+          <div
+            className="fixed z-50"
+            style={{ left: edgeMenu.x, top: edgeMenu.y }}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <Card className="min-w-[180px]">
+              <CardContent className="p-2">
+                <button
+                  className="w-full text-left px-2 py-1 rounded hover:bg-accent"
+                  onClick={handleDeleteEdge}
+                >
+                  Delete connection
+                </button>
+                <button
+                  className="w-full text-left px-2 py-1 rounded hover:bg-accent mt-1"
+                  onClick={handleCloseEdgeMenu}
+                >
+                  Cancel
+                </button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
       {/* Node Editor Dialog */}
