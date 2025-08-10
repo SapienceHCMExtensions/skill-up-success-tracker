@@ -9,9 +9,16 @@ interface ConditionNodeProps {
     label: string;
     description?: string;
     config?: {
-      field: string;
-      operator: string;
-      value: any;
+      field?: string;
+      operator?: string;
+      value?: any;
+    };
+    condition?: {
+      logic?: 'all' | 'any';
+      rules?: { field: string; operator: string; value: any }[];
+      field?: string;
+      operator?: string;
+      value?: any;
     };
   };
   selected?: boolean;
@@ -46,12 +53,29 @@ function ConditionNode({ id, data, selected, onEdit, onDelete, onDuplicate, onCo
         {data.description && (
           <div className="text-xs text-blue-600 mt-1">{data.description}</div>
         )}
-        {data.config && (
-          <div className="text-xs text-blue-700 mt-2">
-            {data.config.field} {data.config.operator} {data.config.value}
-          </div>
-        )}
-        
+        {(() => {
+          const cond: any = (data as any).condition ?? (data as any).config;
+          if (!cond) return null;
+          const hasGroup = Array.isArray(cond.rules) && cond.rules.length > 0;
+          return (
+            <div className="text-xs text-blue-700 mt-2 space-y-1">
+              {hasGroup ? (
+                <>
+                  <div>Match {cond.logic === 'any' ? 'ANY' : 'ALL'}:</div>
+                  {(cond.rules as any[]).slice(0, 3).map((r, i) => (
+                    <div key={i}>{r.field} {r.operator} {String(r.value)}</div>
+                  ))}
+                  {cond.rules.length > 3 && (
+                    <div>+{cond.rules.length - 3} more…</div>
+                  )}
+                </>
+              ) : (
+                cond.field ? <div>{cond.field} {cond.operator} {String(cond.value)}</div> : null
+              )}
+            </div>
+          );
+        })()}
+
         <Handle
           type="target"
           position={Position.Left}

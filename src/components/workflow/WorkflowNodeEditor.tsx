@@ -131,53 +131,131 @@ export function WorkflowNodeEditor({ node, isOpen, onClose, onSave }: WorkflowNo
 
           {node.type === 'condition' && (
             <div className="space-y-4">
-              {(formData.entityType || node.data.entityType) && (
-                <DatabaseFieldSelector
-                  entityType={formData.entityType || node.data.entityType}
-                  value={formData.condition?.entityField || node.data.condition?.entityField}
-                  onValueChange={(value) => updateNestedFormData('condition', 'entityField', value)}
-                  label="Database Field"
-                />
+              {!(formData.entityType || node.data.entityType) && (
+                <div className="text-sm text-muted-foreground">Select a database entity above to choose fields.</div>
               )}
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-2">
-                  <Label>Field</Label>
-                  <Input
-                    value={formData.condition?.field || node.data.condition?.field || ''}
-                    onChange={(e) => updateNestedFormData('condition', 'field', e.target.value)}
-                    placeholder="Field name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Operator</Label>
-                  <Select
-                    value={formData.condition?.operator || node.data.condition?.operator}
-                    onValueChange={(value) => updateNestedFormData('condition', 'operator', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="=">=</SelectItem>
-                      <SelectItem value="!=">!=</SelectItem>
-                      <SelectItem value=">">&gt;</SelectItem>
-                      <SelectItem value="<">&lt;</SelectItem>
-                      <SelectItem value=">=">&gt;=</SelectItem>
-                      <SelectItem value="<=">&lt;=</SelectItem>
-                      <SelectItem value="contains">contains</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Value</Label>
-                  <Input
-                    value={formData.condition?.value || node.data.condition?.value || ''}
-                    onChange={(e) => updateNestedFormData('condition', 'value', e.target.value)}
-                    placeholder="Value"
-                  />
-                </div>
-              </div>
+              {(formData.entityType || node.data.entityType) && (() => {
+                const entityType = (formData.entityType || node.data.entityType) as string
+                const raw = (formData as any).condition ?? (node.data as any).condition
+                const group: { logic: 'all' | 'any'; rules: { field: string; operator: string; value: any }[] } =
+                  raw && Array.isArray(raw.rules)
+                    ? { logic: (raw.logic as 'all' | 'any') || 'all', rules: raw.rules as any[] }
+                    : {
+                        logic: 'all',
+                        rules: [
+                          {
+                            field: (raw?.entityField || raw?.field || '') as string,
+                            operator: (raw?.operator || '=') as string,
+                            value: raw?.value ?? '',
+                          },
+                        ],
+                      }
+
+                return (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Match conditions</Label>
+                      <Select
+                        value={group.logic}
+                        onValueChange={(value) => {
+                          const next = { ...group, logic: value as 'all' | 'any' }
+                          updateFormData('condition', next)
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select logic" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All conditions (AND)</SelectItem>
+                          <SelectItem value="any">Any condition (OR)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {group.rules.map((rule, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end">
+                        <div className="col-span-5">
+                          <DatabaseFieldSelector
+                            entityType={entityType}
+                            value={rule.field}
+                            onValueChange={(value) => {
+                              const rules = [...group.rules]
+                              rules[idx] = { ...rules[idx], field: value }
+                              updateFormData('condition', { ...group, rules })
+                            }}
+                            label={`Field ${idx + 1}`}
+                          />
+                        </div>
+                        <div className="col-span-3 space-y-2">
+                          <Label>Operator</Label>
+                          <Select
+                            value={rule.operator}
+                            onValueChange={(value) => {
+                              const rules = [...group.rules]
+                              rules[idx] = { ...rules[idx], operator: value }
+                              updateFormData('condition', { ...group, rules })
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Operator" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="=">=</SelectItem>
+                              <SelectItem value="!=">!=</SelectItem>
+                              <SelectItem value=">">&gt;</SelectItem>
+                              <SelectItem value="<">&lt;</SelectItem>
+                              <SelectItem value=">=">&gt;=</SelectItem>
+                              <SelectItem value="<=">&lt;=</SelectItem>
+                              <SelectItem value="contains">contains</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-3 space-y-2">
+                          <Label>Value</Label>
+                          <Input
+                            value={rule.value ?? ''}
+                            onChange={(e) => {
+                              const rules = [...group.rules]
+                              rules[idx] = { ...rules[idx], value: e.target.value }
+                              updateFormData('condition', { ...group, rules })
+                            }}
+                            placeholder="Value"
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const rules = group.rules.filter((_, i) => i !== idx)
+                              updateFormData('condition', { ...group, rules })
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="flex justify-start">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const rules = [
+                            ...group.rules,
+                            { field: '', operator: '=', value: '' },
+                          ]
+                          updateFormData('condition', { ...group, rules })
+                        }}
+                      >
+                        Add condition
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 

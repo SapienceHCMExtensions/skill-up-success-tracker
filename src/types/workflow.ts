@@ -79,10 +79,18 @@ export interface WorkflowNode extends Node {
       condition?: string;
     };
     condition?: {
+      // legacy single-rule support
       field?: string;
       operator?: string;
       value?: any;
       entityField?: string;
+      // multi-rule group support
+      logic?: 'all' | 'any';
+      rules?: Array<{
+        field: string;
+        operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | '=' | '!=' | '>' | '<' | '>=' | '<=';
+        value: any;
+      }>;
     };
     action?: {
       type?: string;
