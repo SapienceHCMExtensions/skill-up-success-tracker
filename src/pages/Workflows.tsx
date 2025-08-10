@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Play, Pause, Eye, List } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Edit, Trash2, Play, Pause, Eye, List, Upload, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,7 @@ import type { WorkflowDefinition } from '@/types/workflow';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
+import { WORKFLOW_TEMPLATES } from '@/components/workflow/templates';
 
 export default function Workflows() {
   const [showEditor, setShowEditor] = useState(false);
@@ -40,7 +41,48 @@ export default function Workflows() {
     activateWorkflow,
     deactivateWorkflow,
     applyWorkflowToEntity,
-  } = useWorkflows();
+} = useWorkflows();
+
+  // Import/Export helpers
+  const importRef = useRef<HTMLInputElement>(null);
+
+  const exportWorkflow = (wf: WorkflowDefinition) => {
+    const data = {
+      name: wf.name,
+      description: wf.description,
+      category: wf.category,
+      nodes: wf.nodes,
+      edges: wf.edges,
+      status: wf.status,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${wf.name.replace(/\s+/g, '_').toLowerCase()}_workflow.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFiles: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      setEditingWorkflow(json as any);
+      setShowEditor(true);
+    } catch (err) {
+      alert('Invalid workflow JSON');
+    } finally {
+      if (importRef.current) importRef.current.value = '';
+    }
+  };
+
+  const useTemplate = (tpl: any) => {
+    setEditingWorkflow(tpl.definition as any);
+    setShowEditor(true);
+  };
 
   const openInstances = async (wf: WorkflowDefinition) => {
     setSelectedWorkflowForInstances(wf);
@@ -136,6 +178,21 @@ export default function Workflows() {
               My Tasks
             </Link>
           </Button>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => importRef.current?.click()}
+          >
+            <Upload className="w-4 h-4" />
+            Import
+          </Button>
+          <input
+            ref={importRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImportFiles}
+          />
           <Button onClick={handleCreateNew} className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Create Workflow
@@ -144,6 +201,40 @@ export default function Workflows() {
       </div>
 
       <Separator />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Templates Gallery</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {WORKFLOW_TEMPLATES.map((tpl) => (
+              <div key={tpl.id} className="border rounded-md p-3 flex flex-col gap-2">
+                <div className="font-medium">{tpl.name}</div>
+                <div className="text-sm text-muted-foreground">{tpl.description}</div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => useTemplate(tpl)}>Use Template</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const blob = new Blob([JSON.stringify(tpl.definition, null, 2)], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${tpl.name.replace(/\s+/g, '_').toLowerCase()}_template.json`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="text-center py-8">Loading workflows...</div>
@@ -230,7 +321,14 @@ export default function Workflows() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => exportWorkflow(workflow)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm">
