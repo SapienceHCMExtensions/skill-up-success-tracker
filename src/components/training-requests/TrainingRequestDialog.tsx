@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,8 +42,15 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
   const [estimatedCost, setEstimatedCost] = useState('');
   const [courseId, setCourseId] = useState<string>('none');
 
-  const { courses } = useCourses();
+const { courses } = useCourses();
   const { createRequest } = useTrainingRequests();
+
+  // Sync selectedEmployeeId with prop when opening and prop becomes available
+  useEffect(() => {
+    if (open && employeeId && !selectedEmployeeId) {
+      setSelectedEmployeeId(employeeId);
+    }
+  }, [open, employeeId, selectedEmployeeId]);
 
   // Fetch employees when dialog opens
   const fetchEmployees = async () => {
@@ -72,18 +79,19 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
   };
 
   const handleSubmit = async () => {
-    if (!title || !justification || !selectedEmployeeId) return;
+    const hasEmp = Boolean(selectedEmployeeId || employeeId);
+    if (!title.trim() || !justification.trim() || !hasEmp) return;
 
     setLoading(true);
     try {
       await createRequest({
-        employee_id: selectedEmployeeId,
-        title,
-        description,
+        employee_id: (selectedEmployeeId || (employeeId as string))!,
+        title: title.trim(),
+        description: description || undefined,
         training_provider: trainingProvider || undefined,
         training_date: trainingDate ? format(trainingDate, 'yyyy-MM-dd') : undefined,
         estimated_cost: estimatedCost ? parseFloat(estimatedCost) : undefined,
-        justification,
+        justification: justification.trim(),
         course_id: courseId !== 'none' ? courseId : undefined,
       });
       setOpen(false);
@@ -242,7 +250,7 @@ export function TrainingRequestDialog({ trigger, employeeId }: TrainingRequestDi
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={loading || !title || !justification || !selectedEmployeeId}
+            disabled={loading || !title.trim() || !justification.trim() || !(selectedEmployeeId || employeeId)}
             type="button"
           >
             {loading ? 'Creating...' : 'Create Request'}
