@@ -70,6 +70,7 @@ export default function Workflows() {
     try {
       const text = await file.text();
       const json = JSON.parse(text);
+      if (json && 'id' in json) delete (json as any).id;
       setEditingWorkflow(json as any);
       setShowEditor(true);
     } catch (err) {
@@ -80,7 +81,9 @@ export default function Workflows() {
   };
 
   const useTemplate = (tpl: any) => {
-    setEditingWorkflow(tpl.definition as any);
+    const def = { ...(tpl.definition as any) };
+    if ('id' in def) delete (def as any).id;
+    setEditingWorkflow(def as any);
     setShowEditor(true);
   };
 
@@ -111,8 +114,8 @@ export default function Workflows() {
 
   const handleSave = async (workflowData: Partial<WorkflowDefinition>) => {
     try {
-      if (editingWorkflow) {
-        await updateWorkflow(editingWorkflow.id, workflowData);
+      if (editingWorkflow && (editingWorkflow as any).id) {
+        await updateWorkflow((editingWorkflow as any).id as string, workflowData);
       } else {
         await createWorkflow(workflowData);
       }
