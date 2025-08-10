@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2, Play, Pause, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Play, Pause, Eye, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +18,18 @@ import {
 import { WorkflowEditor } from '@/components/workflow/WorkflowEditor';
 import { useWorkflows } from '@/hooks/useWorkflows';
 import type { WorkflowDefinition } from '@/types/workflow';
+import { supabase } from '@/integrations/supabase/client';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Link } from 'react-router-dom';
 
 export default function Workflows() {
   const [showEditor, setShowEditor] = useState(false);
   const [editingWorkflow, setEditingWorkflow] = useState<WorkflowDefinition | undefined>();
+  
+  const [instancesOpen, setInstancesOpen] = useState(false);
+  const [instancesLoading, setInstancesLoading] = useState(false);
+  const [instances, setInstances] = useState<any[]>([]);
+  const [selectedWorkflowForInstances, setSelectedWorkflowForInstances] = useState<WorkflowDefinition | null>(null);
   
   const {
     workflows,
@@ -33,6 +41,21 @@ export default function Workflows() {
     deactivateWorkflow,
     applyWorkflowToEntity,
   } = useWorkflows();
+
+  const openInstances = async (wf: WorkflowDefinition) => {
+    setSelectedWorkflowForInstances(wf);
+    setInstancesOpen(true);
+    setInstancesLoading(true);
+    const { data, error } = await supabase
+      .from('workflow_instances')
+      .select('id, status, entity_type, entity_id, created_at')
+      .eq('workflow_id', wf.id)
+      .order('created_at', { ascending: false });
+    if (!error) {
+      setInstances(data || []);
+    }
+    setInstancesLoading(false);
+  };
 
   const handleCreateNew = () => {
     setEditingWorkflow(undefined);
@@ -106,10 +129,18 @@ export default function Workflows() {
             Configure automated workflows for training management processes
           </p>
         </div>
-        <Button onClick={handleCreateNew} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Create Workflow
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link to="/my-tasks">
+              <List className="w-4 h-4" />
+              My Tasks
+            </Link>
+          </Button>
+          <Button onClick={handleCreateNew} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Create Workflow
+          </Button>
+        </div>
       </div>
 
       <Separator />
@@ -174,7 +205,13 @@ export default function Workflows() {
                         <Play className="w-4 h-4" />
                       </Button>
                     )}
-
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openInstances(workflow)}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
 
                     <Button
                       variant="outline"
@@ -247,6 +284,39 @@ export default function Workflows() {
           ))}
         </div>
       )}
+      <Dialog open={instancesOpen} onOpenChange={setInstancesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Workflow Instances</DialogTitle>
+            {selectedWorkflowForInstances && (
+              <DialogDescription>
+                {selectedWorkflowForInstances.name}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          <div className="space-y-2">
+            {instancesLoading ? (
+              <div className="text-sm text-muted-foreground">Loading instances...</div>
+            ) : instances.length === 0 ? (
+              <div className="text-sm text-muted-foreground">No instances found for this workflow.</div>
+            ) : (
+              <div className="space-y-2">
+                {instances.map((inst) => (
+                  <div key={inst.id} className="flex items-center justify-between rounded-md border p-2">
+                    <div className="text-sm">
+                      <div className="font-medium">{inst.status}</div>
+                      <div className="text-muted-foreground">{inst.entity_type} • {inst.entity_id}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(inst.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

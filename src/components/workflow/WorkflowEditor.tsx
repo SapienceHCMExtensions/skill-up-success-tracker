@@ -13,6 +13,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import { CheckCircle2, XCircle } from 'lucide-react';
 import { WorkflowToolbar } from './WorkflowToolbar';
 import { WorkflowNodeEditor } from './WorkflowNodeEditor';
 import { Button } from '@/components/ui/button';
@@ -84,8 +85,22 @@ const nodeIdCounter = useRef(1);
   });
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      if (sourceNode?.type === 'condition') {
+        const existing = edges.filter((e) => e.source === params.source);
+        if (existing.length >= 2) {
+          toast.error('Condition nodes can have only two outgoing branches');
+          return;
+        }
+        const labels = new Set((existing as any[]).map((e: any) => e.label));
+        const nextLabel = labels.has('True') ? 'False' : 'True';
+        setEdges((eds) => addEdge({ ...params, label: nextLabel }, eds));
+      } else {
+        setEdges((eds) => addEdge(params, eds));
+      }
+    },
+    [nodes, edges, setEdges]
   );
 
   const addNode = useCallback((type: string) => {
@@ -234,7 +249,20 @@ const nodeIdCounter = useRef(1);
     toast.success('Connection deleted');
   }, [setEdges, edgeMenu.edgeId]);
 
-  const canSave = workflowName.trim().length > 0 && nodes.length > 0;
+  // Validation checks
+  const startCount = nodes.filter((n) => n.type === 'start').length;
+  const hasOneStart = startCount === 1;
+  const hasEnd = nodes.some((n) => n.type === 'end');
+  const conditionLabelsOk = nodes
+    .filter((n) => n.type === 'condition')
+    .every((n) => {
+      const outgoing = edges.filter((e) => e.source === n.id);
+      const labels = new Set((outgoing as any[]).map((e: any) => e.label));
+      return outgoing.length <= 2 && (outgoing.length < 2 || (labels.has('True') && labels.has('False')));
+    });
+  const isValid = hasOneStart && hasEnd && conditionLabelsOk;
+
+  const canSave = workflowName.trim().length > 0 && nodes.length > 0 && isValid;
   const nodeTypes = createNodeTypes(
     handleEditNode, 
     handleDeleteNode, 
@@ -300,6 +328,38 @@ const nodeIdCounter = useRef(1);
           onTest={handleTest}
           canSave={canSave}
         />
+
+        <div className="mt-4">
+          <h3 className="text-sm font-semibold mb-2">Readiness checklist</h3>
+          <Card className="p-3">
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                {hasOneStart ? (
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-destructive" />
+                )}
+                <span>Exactly one Start node</span>
+              </li>
+              <li className="flex items-center gap-2">
+                {hasEnd ? (
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-destructive" />
+                )}
+                <span>At least one End node</span>
+              </li>
+              <li className="flex items-center gap-2">
+                {conditionLabelsOk ? (
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-destructive" />
+                )}
+                <span>Condition branches labeled True/False (max 2)</span>
+              </li>
+            </ul>
+          </Card>
+        </div>
 
         <Separator />
 

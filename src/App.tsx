@@ -21,6 +21,7 @@ import TrainingRequests from "./pages/TrainingRequests";
 import Admin from "./pages/Admin";
 import GeminiConfig from "./pages/GeminiConfig";
 import Workflows from "./pages/Workflows";
+import MyTasks from "./pages/MyTasks";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/training-requests" element={<ProtectedRoute><TrainingLayout><TrainingRequests /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><TrainingLayout><Admin /></TrainingLayout></ProtectedRoute>} />
             <Route path="/workflows" element={<ProtectedRoute><TrainingLayout><Workflows /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/my-tasks" element={<ProtectedRoute><TrainingLayout><MyTasks /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><GeminiConfig /></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
