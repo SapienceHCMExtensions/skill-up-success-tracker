@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle, CheckCircle, Eye, Clock, UserCheck } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Eye, Clock, UserCheck, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import Papa from 'papaparse';
 
 interface SecurityLog {
   id: string;
@@ -22,29 +23,64 @@ export function SecurityAuditDashboard() {
   const [loading, setLoading] = useState(true);
   const { userRole } = useAuth();
 
+  // Filters
+  const [eventType, setEventType] = useState<string>('all');
+  const [fromDate, setFromDate] = useState<string>('');
+  const [toDate, setToDate] = useState<string>('');
+
   useEffect(() => {
     if (userRole === 'admin') {
       fetchSecurityLogs();
     }
   }, [userRole]);
 
-  const fetchSecurityLogs = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('security_audit_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+const fetchSecurityLogs = async () => {
+  setLoading(true);
+  try {
+    let query = supabase
+      .from('security_audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200);
 
-      if (error) throw error;
-      setSecurityLogs((data || []) as SecurityLog[]);
-    } catch (error) {
-      console.error('Error fetching security logs:', error);
-    } finally {
-      setLoading(false);
+    if (eventType !== 'all') query = query.eq('event_type', eventType);
+    if (fromDate) query = query.gte('created_at', new Date(fromDate).toISOString());
+    if (toDate) {
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      query = query.lte('created_at', end.toISOString());
     }
-  };
 
+    const { data, error } = await query;
+    if (error) throw error;
+    setSecurityLogs((data || []) as SecurityLog[]);
+  } catch (error) {
+    console.error('Error fetching security logs:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const exportCSV = () => {
+  const rows = securityLogs.map((l) => ({
+    id: l.id,
+    event_type: l.event_type,
+    user_id: l.user_id,
+    ip_address: l.ip_address,
+    user_agent: l.user_agent,
+    created_at: l.created_at,
+    details: l.details ? JSON.stringify(l.details) : '',
+  }));
+  const csv = Papa.unparse(rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `security_logs_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'role_assigned':
@@ -149,11 +185,48 @@ export function SecurityAuditDashboard() {
           </Alert>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <h3 className="text-lg font-semibold">Recent Security Events</h3>
-              <Button onClick={fetchSecurityLogs} size="sm" variant="outline">
-                Refresh
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button onClick={exportCSV} size="sm" variant="outline">Export CSV</Button>
+                <Button onClick={fetchSecurityLogs} size="sm" variant="outline">Refresh</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <select
+                  className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                  value={eventType}
+                  onChange={(e) => setEventType(e.target.value)}
+                  aria-label="Filter by event type"
+                >
+                  <option value="all">All events</option>
+                  <option value="role_assigned">role_assigned</option>
+                  <option value="role_modified">role_modified</option>
+                  <option value="role_removed">role_removed</option>
+                  <option value="user_created_via_csv">user_created_via_csv</option>
+                </select>
+              </div>
+              <input
+                type="date"
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                aria-label="From date"
+              />
+              <input
+                type="date"
+                className="w-full h-10 rounded-md border bg-background px-3 text-sm"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                aria-label="To date"
+              />
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={fetchSecurityLogs}>Apply</Button>
+                <Button size="sm" variant="ghost" onClick={() => { setEventType('all'); setFromDate(''); setToDate(''); fetchSecurityLogs(); }}>Clear</Button>
+              </div>
             </div>
 
             {loading ? (

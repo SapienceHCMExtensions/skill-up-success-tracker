@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Shield, Key, Languages, Users, Workflow } from "lucide-react"
+import { Shield, Key, Languages, Users, Workflow, ShieldCheck, List } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { Navigate, Link } from "react-router-dom"
 import { SecurityAuditDashboard } from "@/components/security/SecurityAuditDashboard"
@@ -95,6 +95,44 @@ export default function Admin() {
             <Button asChild className="w-full">
               <Link to="/workflows">
                 Manage Workflows
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-primary" />
+              Roles & Permissions
+            </CardTitle>
+            <CardDescription>
+              Assign and revoke roles for users
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/admin/roles">
+                Manage Roles
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <List className="w-6 h-6 text-primary" />
+              Audit Trail
+            </CardTitle>
+            <CardDescription>
+              Review data changes across the system
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/admin/audit-logs">
+                View Audit Logs
               </Link>
             </Button>
           </CardContent>

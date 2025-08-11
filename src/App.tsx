@@ -24,6 +24,8 @@ import Workflows from "./pages/Workflows";
 import MyTasks from "./pages/MyTasks";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import AdminRoles from "./pages/AdminRoles";
+import AdminAuditLogs from "./pages/AdminAuditLogs";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="/workflows" element={<ProtectedRoute><TrainingLayout><Workflows /></TrainingLayout></ProtectedRoute>} />
             <Route path="/my-tasks" element={<ProtectedRoute><TrainingLayout><MyTasks /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><GeminiConfig /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/roles" element={<ProtectedRoute><TrainingLayout><AdminRoles /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/audit-logs" element={<ProtectedRoute><TrainingLayout><AdminAuditLogs /></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
