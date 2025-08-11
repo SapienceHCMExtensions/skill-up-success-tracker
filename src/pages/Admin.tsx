@@ -23,7 +23,7 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="grid gap-6 max-w-md">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

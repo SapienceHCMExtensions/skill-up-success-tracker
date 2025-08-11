@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TrainingLayout } from "@/components/TrainingLayout";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -53,15 +54,15 @@ const App = () => (
             <Route path="/users" element={<ProtectedRoute><TrainingLayout><UserManagement /></TrainingLayout></ProtectedRoute>} />
             <Route path="/translations" element={<ProtectedRoute><TrainingLayout><TranslationManagement /></TrainingLayout></ProtectedRoute>} />
             <Route path="/training-requests" element={<ProtectedRoute><TrainingLayout><TrainingRequests /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><TrainingLayout><Admin /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><TrainingLayout><AdminLayout><Admin /></AdminLayout></TrainingLayout></ProtectedRoute>} />
             <Route path="/workflows" element={<ProtectedRoute><TrainingLayout><Workflows /></TrainingLayout></ProtectedRoute>} />
             <Route path="/my-tasks" element={<ProtectedRoute><TrainingLayout><MyTasks /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><GeminiConfig /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/roles" element={<ProtectedRoute><TrainingLayout><AdminRoles /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/audit-logs" element={<ProtectedRoute><TrainingLayout><AdminAuditLogs /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/org-settings" element={<ProtectedRoute><TrainingLayout><OrganizationSettings /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/email-templates" element={<ProtectedRoute><TrainingLayout><EmailTemplates /></TrainingLayout></ProtectedRoute>} />
-            <Route path="/admin/workflow-observability" element={<ProtectedRoute><TrainingLayout><WorkflowObservability /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><AdminLayout><GeminiConfig /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/roles" element={<ProtectedRoute><TrainingLayout><AdminLayout><AdminRoles /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/audit-logs" element={<ProtectedRoute><TrainingLayout><AdminLayout><AdminAuditLogs /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/org-settings" element={<ProtectedRoute><TrainingLayout><AdminLayout><OrganizationSettings /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/email-templates" element={<ProtectedRoute><TrainingLayout><AdminLayout><EmailTemplates /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/workflow-observability" element={<ProtectedRoute><TrainingLayout><AdminLayout><WorkflowObservability /></AdminLayout></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
