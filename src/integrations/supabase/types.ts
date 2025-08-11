@@ -294,6 +294,45 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          html: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          html: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          html?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       employee_certificates: {
         Row: {
           certificate_url: string | null
@@ -551,6 +590,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      organization_settings: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          default_language: string | null
+          email_from_email: string | null
+          email_from_name: string | null
+          id: string
+          logo_url: string | null
+          org_name: string
+          slack_webhook_url: string | null
+          teams_webhook_url: string | null
+          timezone: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          default_language?: string | null
+          email_from_email?: string | null
+          email_from_name?: string | null
+          id?: string
+          logo_url?: string | null
+          org_name?: string
+          slack_webhook_url?: string | null
+          teams_webhook_url?: string | null
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          default_language?: string | null
+          email_from_email?: string | null
+          email_from_name?: string | null
+          id?: string
+          logo_url?: string | null
+          org_name?: string
+          slack_webhook_url?: string | null
+          teams_webhook_url?: string | null
+          timezone?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_default_language_fkey"
+            columns: ["default_language"]
+            isOneToOne: false
+            referencedRelation: "languages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_cost_breakdown: {
         Row: {
@@ -1367,6 +1462,44 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_instance_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          instance_id: string
+          message: string | null
+          metadata: Json
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          instance_id: string
+          message?: string | null
+          metadata?: Json
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          instance_id?: string
+          message?: string | null
+          metadata?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_instance_events_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_instances: {
         Row: {
           created_at: string
@@ -1376,6 +1509,7 @@ export type Database = {
           entity_type: string
           id: string
           last_error: string | null
+          retry_count: number
           started_by: string | null
           status: string
           updated_at: string
@@ -1389,6 +1523,7 @@ export type Database = {
           entity_type: string
           id?: string
           last_error?: string | null
+          retry_count?: number
           started_by?: string | null
           status?: string
           updated_at?: string
@@ -1402,6 +1537,7 @@ export type Database = {
           entity_type?: string
           id?: string
           last_error?: string | null
+          retry_count?: number
           started_by?: string | null
           status?: string
           updated_at?: string
