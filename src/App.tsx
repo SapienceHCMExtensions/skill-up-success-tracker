@@ -26,6 +26,9 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminRoles from "./pages/AdminRoles";
 import AdminAuditLogs from "./pages/AdminAuditLogs";
+import OrganizationSettings from "./pages/OrganizationSettings";
+import EmailTemplates from "./pages/EmailTemplates";
+import WorkflowObservability from "./pages/WorkflowObservability";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +59,9 @@ const App = () => (
             <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><GeminiConfig /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute><TrainingLayout><AdminRoles /></TrainingLayout></ProtectedRoute>} />
             <Route path="/admin/audit-logs" element={<ProtectedRoute><TrainingLayout><AdminAuditLogs /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/org-settings" element={<ProtectedRoute><TrainingLayout><OrganizationSettings /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/email-templates" element={<ProtectedRoute><TrainingLayout><EmailTemplates /></TrainingLayout></ProtectedRoute>} />
+            <Route path="/admin/workflow-observability" element={<ProtectedRoute><TrainingLayout><WorkflowObservability /></TrainingLayout></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

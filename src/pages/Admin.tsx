@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Shield, Key, Languages, Users, Workflow, ShieldCheck, List } from "lucide-react"
+import { Shield, Key, Languages, Users, Workflow, ShieldCheck, List, Settings, Mail, Activity } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { Navigate, Link } from "react-router-dom"
 import { SecurityAuditDashboard } from "@/components/security/SecurityAuditDashboard"
@@ -133,6 +133,63 @@ export default function Admin() {
             <Button asChild className="w-full">
               <Link to="/admin/audit-logs">
                 View Audit Logs
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-6 h-6 text-primary" />
+              Organization Settings
+            </CardTitle>
+            <CardDescription>
+              Manage branding, locale, and integrations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/admin/org-settings">
+                Open Settings
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="w-6 h-6 text-primary" />
+              Email Templates
+            </CardTitle>
+            <CardDescription>
+              Create and manage reusable email templates
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/admin/email-templates">
+                Manage Templates
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-6 h-6 text-primary" />
+              Workflow Observability
+            </CardTitle>
+            <CardDescription>
+              Inspect workflow instances and retry failures
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link to="/admin/workflow-observability">
+                Open Observability
               </Link>
             </Button>
           </CardContent>

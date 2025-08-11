@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.generate-course-description]
 verify_jwt = true
+
+[functions.send-templated-email]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = true
+
+[functions.workflow-retry]
+verify_jwt = true
+
+[functions.translate-with-gemini]
+verify_jwt = true

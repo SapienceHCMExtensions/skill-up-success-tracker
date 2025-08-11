@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,9 +34,11 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useTranslations } from '@/hooks/useTranslations';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Languages, Plus, Edit, Trash2, Globe, Search } from 'lucide-react';
+import { Languages, Plus, Edit, Trash2, Globe, Search, Upload, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
+import Papa from 'papaparse';
 
 type Language = Tables<'languages'>;
 type Translation = Tables<'translations'>;
