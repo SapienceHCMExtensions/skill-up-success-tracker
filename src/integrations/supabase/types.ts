@@ -2015,6 +2015,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_public_sso_settings: {
+        Args: { _subdomain: string }
+        Returns: {
+          enable_azure: boolean
+          enable_saml: boolean
+        }[]
+      }
       has_org_role: {
         Args: {
           _user_id: string

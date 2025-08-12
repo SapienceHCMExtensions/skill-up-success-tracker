@@ -29,22 +29,18 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
-    // Load public SSO settings for this subdomain
+    // Load public SSO flags via secure function (no sensitive data exposed)
     (supabase as any)
-      .from('sso_settings')
-      .select('enable_azure, azure_tenant, enable_saml, saml_domain')
-      .eq('subdomain', currentSubdomain)
-      .maybeSingle()
+      .rpc('get_public_sso_settings', { _subdomain: currentSubdomain })
       .then(({ data, error }: any) => {
         if (error) {
-          console.warn('No SSO settings found for subdomain', currentSubdomain, error.message);
+          console.warn('SSO flags unavailable for', currentSubdomain, error.message);
           return;
         }
-        if (data) {
-          setEnableAzure(!!data.enable_azure);
-          setAzureTenant(data.azure_tenant ?? null);
-          setEnableSaml(!!data.enable_saml);
-          setSamlDomain(data.saml_domain ?? null);
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) {
+          setEnableAzure(!!row.enable_azure);
+          setEnableSaml(!!row.enable_saml);
         }
       });
   }, [currentSubdomain]);
@@ -93,11 +89,7 @@ export default function Auth() {
 
   const oauthSignIn = async (provider: 'google' | 'linkedin_oidc' | 'azure') => {
     try {
-      if (provider === 'azure') {
-        await supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: window.location.origin, queryParams: azureTenant ? { tenant: azureTenant } : undefined } });
-      } else {
-        await supabase.auth.signInWithOAuth({ provider: provider as any, options: { redirectTo: window.location.origin } });
-      }
+      await supabase.auth.signInWithOAuth({ provider: provider as any, options: { redirectTo: window.location.origin } });
     } catch (e) {
       console.error('OAuth error', e);
     }
@@ -105,10 +97,12 @@ export default function Auth() {
 
   const samlSignIn = async () => {
     try {
-      if (!samlDomain) return;
-      // Initiate SAML SSO flow
+      const input = window.prompt('Enter your work email to continue with SSO');
+      if (!input) return;
+      const domain = input.split('@')[1]?.trim();
+      if (!domain) return;
       // @ts-ignore - type may vary depending on supabase-js version
-      await supabase.auth.signInWithSSO({ domain: samlDomain, redirectTo: window.location.origin });
+      await supabase.auth.signInWithSSO({ domain, redirectTo: window.location.origin });
     } catch (e) {
       console.error('SSO error', e);
     }
@@ -268,8 +262,8 @@ export default function Auth() {
                 {enableAzure && (
                   <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('azure')}>Microsoft</Button>
                 )}
-                {enableSaml && samlDomain && (
-                  <Button type="button" variant="outline" className="h-11" onClick={samlSignIn}>SSO (SAML)</Button>
+                {enableSaml && (
+                  <Button type="button" variant="outline" className="h-11" onClick={samlSignIn}>Company SSO (SAML)</Button>
                 )}
               </div>
               <div className="mt-6 text-center">
