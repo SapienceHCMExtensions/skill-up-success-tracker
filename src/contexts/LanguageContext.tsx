@@ -26,6 +26,15 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
+const STATIC_FALLBACK_TRANSLATIONS: TranslationMap = {
+  'auth.title': 'Welcome Back',
+  'auth.subtitle': 'Sign in to access your training dashboard',
+  'auth.email': 'Email Address',
+  'auth.password': 'Password',
+  'auth.signIn': 'Sign In',
+  'auth.signUp': 'Create Account',
+};
+
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [currentLanguage, setCurrentLanguage] = useState<Language | null>(null);
   const [languages, setLanguages] = useState<Language[]>([]);
@@ -121,9 +130,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   };
 
-  // Translation function
+  // Translation function with static fallback
   const t = (key: string, fallback?: string) => {
-    return translations[key] || fallback || key;
+    return translations[key] || STATIC_FALLBACK_TRANSLATIONS[key] || (fallback ?? key);
   };
 
   const value: LanguageContextType = {

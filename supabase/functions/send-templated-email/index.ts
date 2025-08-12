@@ -18,6 +18,7 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const ELASTICEMAIL_API_KEY = Deno.env.get("ELASTICEMAIL_API_KEY");
@@ -25,6 +26,30 @@ serve(async (req) => {
   const ELASTICEMAIL_FROM_NAME = Deno.env.get("ELASTICEMAIL_FROM_NAME") ?? "Lovable App";
 
   try {
+    // Verify JWT and get user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Missing Authorization header" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Role check: only admin or manager can send emails
+    const { data: roles, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userData.user.id);
+    if (roleError) throw roleError;
+    const allowed = (roles || []).some(r => r.role === 'admin' || r.role === 'manager');
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const { to, template_id, template_name, subject_override, variables = {} } = await req.json();
 
     if (!Array.isArray(to) || to.length === 0) {
