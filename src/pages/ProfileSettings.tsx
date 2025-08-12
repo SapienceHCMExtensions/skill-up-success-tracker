@@ -1,13 +1,30 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+
+const pages = [
+  { label: "Dashboard", value: "/" },
+  { label: "Courses", value: "/courses" },
+  { label: "Sessions", value: "/sessions" },
+  { label: "Training Requests", value: "/training-requests" },
+  { label: "Plans", value: "/plans" },
+  { label: "Costs", value: "/costs" },
+  { label: "Evaluations", value: "/evaluations" },
+  { label: "My Tasks", value: "/my-tasks" },
+]
 
 const ProfileSettings = () => {
   const { employeeProfile, user } = useAuth() as any
   const { t } = useLanguage()
+  const { toast } = useToast()
+  const [preferredRoute, setPreferredRoute] = useState<string>(
+    typeof window !== 'undefined' ? localStorage.getItem('preferred_start_route') || '/' : '/'
+  )
 
   useEffect(() => {
     const title = "Profile Settings | Personalize your account"
@@ -33,6 +50,12 @@ const ProfileSettings = () => {
   }, [])
 
   const displayName = employeeProfile?.name || user?.email || "User"
+
+  const handlePreferredChange = (value: string) => {
+    setPreferredRoute(value)
+    localStorage.setItem('preferred_start_route', value)
+    toast({ title: 'Preference saved', description: `Start on ${pages.find(p => p.value === value)?.label}` })
+  }
 
   return (
     <div>
@@ -60,6 +83,30 @@ const ProfileSettings = () => {
             <CardContent className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Interface language</span>
               <LanguageSelector />
+            </CardContent>
+          </Card>
+        </section>
+
+        <section aria-labelledby="preferences" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle id="preferences">Preferences</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-medium text-foreground">Preferred start page</div>
+                <p className="text-xs text-muted-foreground">Choose the page you land on after sign-in.</p>
+              </div>
+              <Select value={preferredRoute} onValueChange={handlePreferredChange}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Select a page" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pages.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </section>

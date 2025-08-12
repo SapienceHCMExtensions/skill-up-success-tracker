@@ -33,7 +33,7 @@ import WorkflowObservability from "./pages/WorkflowObservability";
 import ProfileSettings from "./pages/ProfileSettings";
 import { ThemeProvider } from "next-themes";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
- 
+import Start from "./pages/Start";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -56,7 +56,7 @@ const App = () => (
             <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<ProtectedRoute><TrainingLayout><Dashboard /></TrainingLayout></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><TrainingLayout><Start /></TrainingLayout></ProtectedRoute>} />
               <Route path="/courses" element={<ProtectedRoute><TrainingLayout><Courses /></TrainingLayout></ProtectedRoute>} />
               <Route path="/plans" element={<ProtectedRoute><TrainingLayout><Plans /></TrainingLayout></ProtectedRoute>} />
               <Route path="/sessions" element={<ProtectedRoute><TrainingLayout><Sessions /></TrainingLayout></ProtectedRoute>} />

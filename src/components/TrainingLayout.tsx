@@ -2,7 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { TrainingSidebar } from "@/components/TrainingSidebar"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
-import { LogOut, Shield, Settings, User2, Building2 } from "lucide-react"
+import { LogOut, Shield, User2, Building2, Search } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
 import { Link } from "react-router-dom"
@@ -16,6 +16,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import React from "react"
+import { CommandPalette } from "@/components/CommandPalette"
 
 interface TrainingLayoutProps {
   children: React.ReactNode
@@ -26,6 +28,18 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
   const { t, isRTL } = useLanguage();
   const displayName = employeeProfile?.name || 'User'
   const initials = displayName.split(' ').map((p) => p[0] ?? '').join('').slice(0, 2).toUpperCase()
+  const [cmdOpen, setCmdOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setCmdOpen((o) => !o)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   return (
     <SidebarProvider>
@@ -36,10 +50,14 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
           <header className="h-16 border-b bg-card shadow-sm flex items-center px-6">
             <SidebarTrigger className={isRTL ? "ml-4" : "mr-4"} />
             <div className="flex items-center justify-between w-full">
-              <div>
+              <div className="flex items-center gap-2">
                 <h1 className="text-xl font-semibold text-foreground">{t('app.title')}</h1>
               </div>
               <div className="flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={() => setCmdOpen(true)} aria-label="Open command palette (⌘/Ctrl+K)">
+                  <Search className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Search</span>
+                </Button>
                 <div className="text-sm text-muted-foreground">
                   {t('common.welcome')}, {employeeProfile?.name || 'User'} ({userRole})
                 </div>
@@ -95,6 +113,7 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
           </main>
         </div>
       </div>
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} userRole={userRole} onLogout={signOut} />
     </SidebarProvider>
   )
 }
