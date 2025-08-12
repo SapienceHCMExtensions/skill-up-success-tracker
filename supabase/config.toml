@@ -1,7 +1,7 @@
 project_id = "jmralbctzpdkjvvurach"
 
 [functions.certificate-alerts]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-course-description]
 verify_jwt = true
@@ -16,4 +16,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.translate-with-gemini]
+verify_jwt = true
+
+[functions.create-user]
 verify_jwt = true

@@ -7,22 +7,44 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
+    );
+
+    // Authenticate caller
+    const { data: userData } = await supabaseUser.auth.getUser();
+    const user = userData?.user;
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Authorize: admin, manager, or compliance
+    const [isAdminRes, isManagerRes, isComplianceRes] = await Promise.all([
+      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
+      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'manager' }),
+      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'compliance' }),
+    ]);
+    const allowed = !!isAdminRes.data || !!isManagerRes.data || !!isComplianceRes.data;
+    if (!allowed) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
     console.log('Starting certificate expiry check...');
 
     // Get certificates expiring in 90, 60, and 30 days
     const alertIntervals = [90, 60, 30];
-    const results = [];
+    const results: Array<{ interval: number; certificates: number }> = [];
 
     for (const days of alertIntervals) {
       const targetDate = new Date();
@@ -30,13 +52,9 @@ serve(async (req) => {
       const dateStr = targetDate.toISOString().split('T')[0];
 
       // Find certificates expiring on the target date
-      const { data: certificates, error } = await supabaseClient
+      const { data: certificates, error } = await supabaseAdmin
         .from('employee_certificates')
-        .select(`
-          *,
-          employees!inner(name, email, auth_user_id),
-          courses!inner(title)
-        `)
+        .select('id')
         .eq('expiry_date', dateStr);
 
       if (error) {
@@ -44,34 +62,20 @@ serve(async (req) => {
         continue;
       }
 
-      console.log(`Found ${certificates?.length || 0} certificates expiring in ${days} days`);
+      const count = certificates?.length || 0;
+      console.log(`Found ${count} certificates expiring in ${days} days`);
 
-      if (certificates && certificates.length > 0) {
-        results.push({
-          interval: days,
-          certificates: certificates.length,
-          data: certificates
-        });
-
-        // Here you would integrate with your email service
-        // For now, we'll just log the information
-        for (const cert of certificates) {
-          console.log(`Alert: ${cert.employees.name} - ${cert.courses.title} expires in ${days} days`);
-          
-          // You can add email sending logic here
-          // Example: await sendEmail(cert.employees.email, cert);
-        }
-      }
+      results.push({ interval: days, certificates: count });
     }
 
-    // Log summary to audit table
-    await supabaseClient
+    // Log summary to audit table (no PII)
+    await supabaseAdmin
       .from('training_audit')
       .insert({
         table_name: 'certificate_alerts',
         row_pk: crypto.randomUUID(),
         action: 'alert_check',
-        changed_by: null,
+        changed_by: user.id,
         diff: {
           summary: results,
           timestamp: new Date().toISOString(),
@@ -83,7 +87,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         message: 'Certificate expiry check completed',
-        results: results,
+        results,
         total_alerts: results.reduce((sum, r) => sum + r.certificates, 0)
       }),
       {
@@ -91,18 +95,11 @@ serve(async (req) => {
         status: 200,
       }
     );
-
   } catch (error) {
     console.error('Error in certificate-alerts function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        success: false 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: error?.message ?? 'Unknown error', success: false }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

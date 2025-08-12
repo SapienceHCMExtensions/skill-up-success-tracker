@@ -24,9 +24,25 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "instance_id is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Get current user (for audit)
+    // Get current user (for audit) and authorize
     const { data: userData } = await supabaseAsUser.auth.getUser();
-    const user_id = userData?.user?.id ?? null;
+    const user = userData?.user;
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Require admin or manager role
+    const [isAdminRes, isManagerRes] = await Promise.all([
+      supabaseAsUser.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
+      supabaseAsUser.rpc('has_role', { _user_id: user.id, _role: 'manager' }),
+    ]);
+    const isAdmin = !!isAdminRes.data;
+    const isManager = !!isManagerRes.data;
+    if (!isAdmin && !isManager) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const user_id = user.id;
 
     // Update instance
     const { data: instance, error: instErr } = await supabaseAsService
