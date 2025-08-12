@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type CourseEvaluationResponse = Tables<'course_evaluation_responses'> & {
@@ -14,6 +15,7 @@ export function useCourseEvaluations() {
   const [responses, setResponses] = useState<CourseEvaluationResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchResponses = async () => {
     try {
@@ -57,22 +59,24 @@ export function useCourseEvaluations() {
         .from('employees')
         .select('id')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!employee) throw new Error('Employee record not found');
+      const employeeId = employee?.id || employeeProfile?.id;
+      if (!employeeId || !employeeProfile?.organization_id) throw new Error('Missing employee or organization context');
 
       const { data, error } = await supabase
         .from('course_evaluation_responses')
         .insert({
           course_id: courseId,
           template_id: templateId,
-          employee_id: employee.id,
+          employee_id: employeeId,
           responses,
           overall_rating: overallRating,
           training_request_id: trainingRequestId,
+          organization_id: employeeProfile.organization_id,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

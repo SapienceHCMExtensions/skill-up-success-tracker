@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/hooks/useAuth';
-import { usePlans } from '@/hooks/usePlans';
 import { PlanGeneralInfo } from './PlanGeneralInfo';
 import { PlanContent } from './PlanContent';
 import { PlanDelivery } from './PlanDelivery';

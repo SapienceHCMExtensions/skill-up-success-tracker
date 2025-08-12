@@ -10,6 +10,7 @@ import { Upload, FileText, CheckCircle, AlertCircle, Users } from 'lucide-react'
 import Papa from 'papaparse';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface CsvRow {
   name: string;
@@ -35,6 +36,7 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -112,18 +114,19 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
         .from('departments')
         .select('id, name')
         .eq('name', deptName)
-        .single();
+        .eq('organization_id', employeeProfile?.organization_id || '')
+        .maybeSingle();
 
       if (existingDept) {
         addLog(`Department "${deptName}" already exists`);
         departmentMap.set(deptName, existingDept.id);
       } else {
-        addLog(`Creating new department: ${deptName}`);
-        const { data: newDept, error } = await supabase
-          .from('departments')
-          .insert({ name: deptName })
-          .select('id')
-          .single();
+      addLog(`Creating new department: ${deptName}`);
+      const { data: newDept, error } = await supabase
+        .from('departments')
+        .insert({ name: deptName, organization_id: employeeProfile?.organization_id })
+        .select('id')
+        .maybeSingle();
 
         if (newDept && !error) {
           addLog(`Successfully created department: ${deptName}`);
@@ -149,7 +152,8 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
           .from('employees')
           .select('email')
           .eq('email', row.email)
-          .single();
+          .eq('organization_id', employeeProfile?.organization_id || '')
+          .maybeSingle();
         
         const userExists = !!existingEmployee;
 
@@ -187,7 +191,8 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
                 auth_user_id: authUser.user.id,
                 name: row.name,
                 email: row.email,
-                department_id: row.department ? departmentMap.get(row.department) : null
+                department_id: row.department ? departmentMap.get(row.department) : null,
+                organization_id: employeeProfile?.organization_id,
               });
 
             if (employeeError) {
@@ -203,7 +208,8 @@ export function CsvImport({ onImportComplete }: CsvImportProps) {
               .from('user_roles')
               .insert({
                 user_id: authUser.user.id,
-                role: role as any
+                role: role as any,
+                organization_id: employeeProfile?.organization_id,
               });
 
             if (roleError) {

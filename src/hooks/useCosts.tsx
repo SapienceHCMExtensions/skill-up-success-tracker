@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type CostActual = Tables<'cost_actuals'> & {
@@ -47,6 +48,7 @@ export function useCosts() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchCostActuals = async () => {
     try {
@@ -117,9 +119,10 @@ export function useCosts() {
           amount: costData.amount,
           description: costData.description,
           invoice_no: costData.invoiceNo,
+          organization_id: employeeProfile?.organization_id as string,
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
