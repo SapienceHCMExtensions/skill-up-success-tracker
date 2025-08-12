@@ -171,7 +171,7 @@ All colors MUST be HSL. Professional corporate theme with emphasis on learning a
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --gradient-dashboard: linear-gradient(180deg, hsl(222.2 84% 4.9%), hsl(217.2 32.6% 17.5%));
+    --gradient-dashboard: linear-gradient(180deg, hsl(var(--card)), hsl(var(--card)));
   }
 }
 
