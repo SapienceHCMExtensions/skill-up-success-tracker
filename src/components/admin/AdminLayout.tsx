@@ -29,6 +29,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     "email-templates": "Email Templates",
     "workflow-observability": "Workflow Observability",
     "gemini-config": "Gemini AI Configuration",
+    "sso-settings": "SSO & Identity",
   }
 
   const currentLabel = segment ? labels[segment] ?? segment : "Admin"

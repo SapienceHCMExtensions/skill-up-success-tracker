@@ -179,17 +179,17 @@ export default function Admin() {
         <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="w-6 h-6 text-primary" />
-              Workflow Observability
+              <Key className="w-6 h-6 text-primary" />
+              SSO & Identity
             </CardTitle>
             <CardDescription>
-              Inspect workflow instances and retry failures
+              Configure Azure AD and SAML login options
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full">
-              <Link to="/admin/workflow-observability">
-                Open Observability
+              <Link to="/admin/sso-settings">
+                Manage SSO
               </Link>
             </Button>
           </CardContent>

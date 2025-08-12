@@ -6,17 +6,50 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useMemo, useState } from 'react';
 
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState(''); // Removed hardcoded email for security
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [orgName, setOrgName] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const { user, signIn, signUp, loading: authLoading } = useAuth();
+
+  const [enableAzure, setEnableAzure] = useState(false);
+  const [azureTenant, setAzureTenant] = useState<string | null>(null);
+  const [enableSaml, setEnableSaml] = useState(false);
+  const [samlDomain, setSamlDomain] = useState<string | null>(null);
+
+  const currentSubdomain = useMemo(() => {
+    const host = window.location.hostname;
+    const parts = host.split('.');
+    return parts.length > 2 ? parts[0] : 'default';
+  }, []);
+
+  useEffect(() => {
+    // Load public SSO settings for this subdomain
+    supabase
+      .from('sso_settings')
+      .select('enable_azure, azure_tenant, enable_saml, saml_domain')
+      .eq('subdomain', currentSubdomain)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.warn('No SSO settings found for subdomain', currentSubdomain, error.message);
+          return;
+        }
+        if (data) {
+          setEnableAzure(!!data.enable_azure);
+          setAzureTenant(data.azure_tenant ?? null);
+          setEnableSaml(!!data.enable_saml);
+          setSamlDomain(data.saml_domain ?? null);
+        }
+      });
+  }, [currentSubdomain]);
 
   console.log('Auth page render - user:', user, 'authLoading:', authLoading);
 
@@ -60,14 +93,28 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const oauthSignIn = async (provider: 'google' | 'linkedin_oidc') => {
+  const oauthSignIn = async (provider: 'google' | 'linkedin_oidc' | 'azure') => {
     try {
-      await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
+      if (provider === 'azure') {
+        await supabase.auth.signInWithOAuth({ provider: 'azure', options: { redirectTo: window.location.origin, queryParams: azureTenant ? { tenant: azureTenant } : undefined } });
+      } else {
+        await supabase.auth.signInWithOAuth({ provider: provider as any, options: { redirectTo: window.location.origin } });
+      }
     } catch (e) {
       console.error('OAuth error', e);
     }
   };
 
+  const samlSignIn = async () => {
+    try {
+      if (!samlDomain) return;
+      // Initiate SAML SSO flow
+      // @ts-ignore - type may vary depending on supabase-js version
+      await supabase.auth.signInWithSSO({ domain: samlDomain, redirectTo: window.location.origin });
+    } catch (e) {
+      console.error('SSO error', e);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-dashboard">
       <div className="grid lg:grid-cols-2 min-h-screen">
@@ -220,6 +267,12 @@ export default function Auth() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('google')}>Google</Button>
                 <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('linkedin_oidc')}>LinkedIn</Button>
+                {enableAzure && (
+                  <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('azure')}>Microsoft</Button>
+                )}
+                {enableSaml && samlDomain && (
+                  <Button type="button" variant="outline" className="h-11" onClick={samlSignIn}>SSO (SAML)</Button>
+                )}
               </div>
               <div className="mt-6 text-center">
                 <button
