@@ -8,6 +8,28 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
+const TIMEZONES: string[] = (typeof Intl !== 'undefined' && (Intl as any).supportedValuesOf)
+  ? (Intl as any).supportedValuesOf('timeZone')
+  : [
+    'UTC',
+    'Europe/London',
+    'Europe/Berlin',
+    'Europe/Paris',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Toronto',
+    'America/Sao_Paulo',
+    'Asia/Dubai',
+    'Asia/Kolkata',
+    'Asia/Singapore',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Australia/Sydney',
+    'Africa/Johannesburg',
+  ];
+
 export default function OrganizationSettings() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -146,7 +168,16 @@ export default function OrganizationSettings() {
           </div>
           <div>
             <Label>Timezone</Label>
-            <Input value={settings?.timezone ?? 'UTC'} onChange={(e) => setSettings((s: any) => ({ ...s, timezone: e.target.value }))} />
+            <Select value={settings?.timezone ?? 'UTC'} onValueChange={(v) => setSettings((s: any) => ({ ...s, timezone: v }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {TIMEZONES.map(tz => (
+                  <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>

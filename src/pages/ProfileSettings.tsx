@@ -6,7 +6,8 @@ import { LanguageSelector } from "@/components/language/LanguageSelector"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-
+import { Button } from "@/components/ui/button"
+import { supabase } from "@/integrations/supabase/client"
 const pages = [
   { label: "Dashboard", value: "/" },
   { label: "Courses", value: "/courses" },
@@ -55,6 +56,22 @@ const ProfileSettings = () => {
     setPreferredRoute(value)
     localStorage.setItem('preferred_start_route', value)
     toast({ title: 'Preference saved', description: `Start on ${pages.find(p => p.value === value)?.label}` })
+  }
+
+  const handlePasswordReset = async () => {
+    const email = user?.email
+    if (!email) {
+      toast({ title: 'No email found', description: 'Your account email is missing.', variant: 'destructive' })
+      return
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?type=password-reset`,
+    })
+    if (error) {
+      toast({ title: 'Error', description: error.message ?? 'Could not send reset email', variant: 'destructive' })
+    } else {
+      toast({ title: 'Check your inbox', description: 'Password reset link has been sent.' })
+    }
   }
 
   return (
@@ -127,6 +144,20 @@ const ProfileSettings = () => {
                   <span className="text-foreground font-medium">{user.email}</span>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </section>
+        <section aria-labelledby="security" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle id="security">Security</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-medium text-foreground">Reset password</div>
+                <p className="text-xs text-muted-foreground">Send a password reset link to your email.</p>
+              </div>
+              <Button onClick={handlePasswordReset}>Send reset email</Button>
             </CardContent>
           </Card>
         </section>
