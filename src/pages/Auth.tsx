@@ -12,6 +12,8 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [orgName, setOrgName] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const { user, signIn, signUp, loading: authLoading } = useAuth();
 
   console.log('Auth page render - user:', user, 'authLoading:', authLoading);
@@ -46,7 +48,7 @@ export default function Auth() {
           window.location.href = '/';
         }
       } else {
-        const result = await signUp(email, password, name);
+        const result = await signUp(email, password, name, orgName, subdomain);
         console.log('Sign up result:', result);
       }
     } catch (error) {
@@ -116,20 +118,48 @@ export default function Auth() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required={!isLogin}
-                      className="h-11"
-                    />
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required={!isLogin}
+                        className="h-11"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="orgName">Organization Name</Label>
+                      <Input
+                        id="orgName"
+                        type="text"
+                        placeholder="e.g., Acme Inc."
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                        required
+                        className="h-11"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subdomain">Subdomain</Label>
+                      <Input
+                        id="subdomain"
+                        type="text"
+                        placeholder="acme"
+                        value={subdomain}
+                        onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+                        required
+                        pattern="^[a-z0-9]([a-z0-9-]{1,28}[a-z0-9])?$"
+                        className="h-11"
+                      />
+                      <p className="text-xs text-muted-foreground">Your app subdomain (e.g., acme). No spaces. Letters, numbers, dashes.</p>
+                    </div>
                   </div>
                 )}
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
                   <Input
