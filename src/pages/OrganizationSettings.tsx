@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { LogoUploader } from "@/components/organization/LogoUploader";
+
 
 const TIMEZONES: string[] = (typeof Intl !== 'undefined' && (Intl as any).supportedValuesOf)
   ? (Intl as any).supportedValuesOf('timeZone')
@@ -151,7 +153,16 @@ export default function OrganizationSettings() {
           </div>
           <div>
             <Label>Logo URL</Label>
-            <Input value={settings?.logo_url ?? ''} onChange={(e) => setSettings((s: any) => ({ ...s, logo_url: e.target.value }))} />
+            <div className="flex items-center gap-3">
+              <Input value={settings?.logo_url ?? ''} onChange={(e) => setSettings((s: any) => ({ ...s, logo_url: e.target.value }))} />
+              {orgId && (
+                <LogoUploader orgId={orgId} onUploaded={(url) => setSettings((s: any) => ({ ...s, logo_url: url }))} />
+              )}
+            </div>
+            {settings?.logo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.logo_url} alt="Organization logo preview" className="mt-2 h-12 w-auto" />
+            )}
           </div>
           <div>
             <Label>Default Language</Label>

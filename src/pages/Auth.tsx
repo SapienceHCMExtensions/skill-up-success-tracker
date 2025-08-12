@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -56,6 +58,14 @@ export default function Auth() {
     }
 
     setLoading(false);
+  };
+
+  const oauthSignIn = async (provider: 'google' | 'linkedin_oidc') => {
+    try {
+      await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.origin } });
+    } catch (e) {
+      console.error('OAuth error', e);
+    }
   };
 
   return (
@@ -202,7 +212,15 @@ export default function Auth() {
                   )}
                 </Button>
               </form>
-              
+              <div className="my-4 flex items-center gap-3">
+                <div className="h-px bg-border w-full" />
+                <span className="text-xs text-muted-foreground">Or continue with</span>
+                <div className="h-px bg-border w-full" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('google')}>Google</Button>
+                <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('linkedin_oidc')}>LinkedIn</Button>
+              </div>
               <div className="mt-6 text-center">
                 <button
                   type="button"

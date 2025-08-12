@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/integrations/supabase/client"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AvatarUploader } from "@/components/profile/AvatarUploader"
+import { QRCodeCard } from "@/components/common/QRCodeCard"
+
 const pages = [
   { label: "Dashboard", value: "/" },
   { label: "Courses", value: "/courses" },
@@ -26,6 +30,7 @@ const ProfileSettings = () => {
   const [preferredRoute, setPreferredRoute] = useState<string>(
     typeof window !== 'undefined' ? localStorage.getItem('preferred_start_route') || '/' : '/'
   )
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(employeeProfile?.avatar_url ?? null)
 
   useEffect(() => {
     const title = "Profile Settings | Personalize your account"
@@ -50,7 +55,9 @@ const ProfileSettings = () => {
     link.setAttribute("href", href)
   }, [])
 
-  const displayName = employeeProfile?.name || user?.email || "User"
+const displayName = employeeProfile?.name || user?.email || "User"
+const initials = displayName.split(' ').map((n: string) => n[0]).slice(0,2).join('').toUpperCase()
+
 
   const handlePreferredChange = (value: string) => {
     setPreferredRoute(value)
@@ -146,6 +153,30 @@ const ProfileSettings = () => {
               )}
             </CardContent>
           </Card>
+        </section>
+        <section aria-labelledby="profile-picture" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle id="profile-picture">Profile picture</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-14 w-14">
+                  <AvatarImage src={avatarUrl ?? undefined} alt={`Avatar of ${displayName}`} />
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="text-xs text-muted-foreground">Upload a square image for best results.</div>
+              </div>
+              <AvatarUploader onUploaded={(url) => setAvatarUrl(url)} />
+            </CardContent>
+          </Card>
+        </section>
+        <section aria-labelledby="quick-access" className="mt-6">
+          <QRCodeCard
+            title="Quick Access"
+            description="Scan to open your preferred start page on mobile."
+            value={`${window.location.origin}${preferredRoute}`}
+          />
         </section>
         <section aria-labelledby="security" className="mt-6">
           <Card>
