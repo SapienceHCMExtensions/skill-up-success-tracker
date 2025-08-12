@@ -30,18 +30,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          // Use setTimeout to prevent potential auth loop
+          // Immediately allow the app to render; fetch role/profile in background
+          setLoading(false);
           setTimeout(async () => {
-            const [roleResult, profileResult] = await Promise.all([
-              supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
-              supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
-            ]);
-            
-            setUserRole(roleResult.data?.role || 'employee');
-            setEmployeeProfile(profileResult.data);
-            setLoading(false);
+            try {
+              const [roleResult, profileResult] = await Promise.all([
+                supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle(),
+                supabase.from('employees').select('*').eq('auth_user_id', session.user.id).maybeSingle()
+              ]);
+              setUserRole(roleResult?.data?.role || 'employee');
+              setEmployeeProfile(profileResult?.data ?? null);
+            } catch (err) {
+              console.error('Background fetch auth context failed:', err);
+            }
           }, 0);
         } else {
           setUserRole(null);
@@ -52,21 +55,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('Initial session check:', session?.user?.email);
       if (session) {
         setSession(session);
         setUser(session.user);
-        
-        // Get user role and profile
-        Promise.all([
-          supabase.from('user_roles').select('role').eq('user_id', session.user.id).single(),
-          supabase.from('employees').select('*').eq('auth_user_id', session.user.id).single()
-        ]).then(([roleResult, profileResult]) => {
-          setUserRole(roleResult.data?.role || 'employee');
-          setEmployeeProfile(profileResult.data);
-          setLoading(false);
-        });
+        // Allow app to render immediately; fetch role/profile in background
+        setLoading(false);
+        try {
+          const [roleResult, profileResult] = await Promise.all([
+            supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle(),
+            supabase.from('employees').select('*').eq('auth_user_id', session.user.id).maybeSingle()
+          ]);
+          setUserRole(roleResult?.data?.role || 'employee');
+          setEmployeeProfile(profileResult?.data ?? null);
+        } catch (err) {
+          console.error('Initial background fetch failed:', err);
+        }
       } else {
         setLoading(false);
       }
