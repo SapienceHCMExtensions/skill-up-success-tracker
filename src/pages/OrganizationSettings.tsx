@@ -13,6 +13,7 @@ export default function OrganizationSettings() {
   const [loading, setLoading] = useState(true);
   const [languages, setLanguages] = useState<Tables<'languages'>[]>([]);
   const [settings, setSettings] = useState<any | null>(null);
+  const [orgId, setOrgId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Organization Settings | Admin";
@@ -23,12 +24,28 @@ export default function OrganizationSettings() {
   useEffect(() => {
     const load = async () => {
       try {
+        const { data: orgData, error: orgError } = await supabase.rpc('get_current_user_org');
+        if (orgError) throw orgError;
+        setOrgId(orgData as string);
+
         const [{ data: lang }, { data: setRow }] = await Promise.all([
           supabase.from('languages').select('*').order('name'),
-          supabase.from('organization_settings').select('*').limit(1).maybeSingle(),
+          supabase.from('organization_settings').select('*').eq('organization_id', orgData).limit(1).maybeSingle(),
         ]);
         setLanguages(lang || []);
-        setSettings(setRow || { org_name: '', logo_url: '', default_language: null, timezone: 'UTC', email_from_name: '', email_from_email: '', slack_webhook_url: '', teams_webhook_url: '' });
+        setSettings(
+          setRow || {
+            org_name: '',
+            logo_url: '',
+            default_language: null,
+            timezone: 'UTC',
+            email_from_name: '',
+            email_from_email: '',
+            slack_webhook_url: '',
+            teams_webhook_url: '',
+            organization_id: orgData,
+          }
+        );
       } catch (e) {
         console.error(e);
         toast({ title: 'Error', description: 'Failed to load settings', variant: 'destructive' });
@@ -42,11 +59,43 @@ export default function OrganizationSettings() {
   const save = async () => {
     try {
       setLoading(true);
+
+      // Ensure current organization id
+      let currentOrgId = orgId;
+      if (!currentOrgId) {
+        const { data: orgData, error: orgError } = await supabase.rpc('get_current_user_org');
+        if (orgError) throw orgError;
+        currentOrgId = orgData as string;
+        setOrgId(currentOrgId);
+      }
+
+      const { data: userResult } = await supabase.auth.getUser();
+      const userId = userResult?.user?.id ?? null;
+
+      const updateFields = {
+        org_name: settings?.org_name ?? '',
+        logo_url: settings?.logo_url ?? '',
+        default_language: settings?.default_language ?? null,
+        timezone: settings?.timezone ?? 'UTC',
+        email_from_name: settings?.email_from_name ?? '',
+        email_from_email: settings?.email_from_email ?? '',
+        slack_webhook_url: settings?.slack_webhook_url ?? '',
+        teams_webhook_url: settings?.teams_webhook_url ?? '',
+      };
+
       if (settings?.id) {
-        const { error } = await supabase.from('organization_settings').update(settings).eq('id', settings.id);
+        const { error } = await supabase
+          .from('organization_settings')
+          .update({ ...updateFields, updated_by: userId })
+          .eq('id', settings.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('organization_settings').insert(settings);
+        const insertPayload = {
+          ...updateFields,
+          organization_id: currentOrgId,
+          created_by: userId,
+        };
+        const { error } = await supabase.from('organization_settings').insert(insertPayload);
         if (error) throw error;
       }
       toast({ title: 'Saved', description: 'Settings updated successfully' });
