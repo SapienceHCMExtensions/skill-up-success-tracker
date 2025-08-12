@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { WorkflowDefinition } from '@/types/workflow';
+import { useAuth } from '@/hooks/useAuth';
 
 export function useWorkflows() {
   const [workflows, setWorkflows] = useState<WorkflowDefinition[]>([]);
   const [loading, setLoading] = useState(false);
+  const { employeeProfile } = useAuth();
 
   const fetchWorkflows = async () => {
     setLoading(true);
@@ -59,6 +61,7 @@ export function useWorkflows() {
         })) as any,
         created_by: userId,
         updated_by: userId,
+        organization_id: employeeProfile?.organization_id as string,
       };
 
       const { data, error } = await supabase
@@ -204,6 +207,7 @@ export function useWorkflows() {
           entity_id: entityId,
           status: 'running',
           started_by: userId,
+          organization_id: employeeProfile?.organization_id as string,
         })
         .select('id')
         .single();

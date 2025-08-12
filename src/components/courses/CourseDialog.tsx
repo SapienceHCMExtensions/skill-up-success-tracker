@@ -98,6 +98,20 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
           setLoading(false);
           return;
         }
+        // Ensure user has permissions: admin or manager
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role, organization_id')
+          .eq('user_id', user.id)
+          .eq('organization_id', employeeProfile.organization_id)
+          .maybeSingle();
+        if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'manager')) {
+          toast.error('You need admin or manager role to create courses.');
+          setLoading(false);
+          return;
+        }
         await createCourse({ ...formData, organization_id: employeeProfile.organization_id });
       }
       setOpen(false);

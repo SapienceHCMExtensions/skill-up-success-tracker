@@ -30,7 +30,7 @@ const ALL_ROLES = ["admin", "manager", "finance", "instructor", "compliance"] as
 type Role = typeof ALL_ROLES[number];
 
 export default function AdminRoles() {
-  const { userRole } = useAuth();
+  const { userRole, employeeProfile } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [roles, setRoles] = useState<UserRoleRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function AdminRoles() {
   const assignRole = async (userId: string, role: Role) => {
     setAssigning(`${userId}:${role}`);
     try {
-      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role, organization_id: employeeProfile?.organization_id as string });
       if (error) {
         if (String(error.message || "").toLowerCase().includes("duplicate")) {
           toast.info("Role already assigned");

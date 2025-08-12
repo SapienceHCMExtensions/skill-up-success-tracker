@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface EmailTemplate { id: string; name: string; category: string; subject: string; html: string; is_active: boolean; }
 
@@ -16,6 +17,7 @@ export default function EmailTemplates() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [editing, setEditing] = useState<EmailTemplate | null>(null);
   const [open, setOpen] = useState(false);
+  const { employeeProfile } = useAuth();
 
   useEffect(() => {
     document.title = "Email Templates | Admin";
@@ -39,10 +41,10 @@ export default function EmailTemplates() {
 
   const save = async () => {
     if (!editing) return;
-    const payload = { name: editing.name, category: editing.category, subject: editing.subject, html: editing.html, is_active: editing.is_active };
+    const payload = { name: editing.name, category: editing.category, subject: editing.subject, html: editing.html, is_active: editing.is_active } as any;
     const { error } = editing.id
       ? await supabase.from('email_templates').update(payload).eq('id', editing.id)
-      : await supabase.from('email_templates').insert(payload);
+      : await supabase.from('email_templates').insert({ ...payload, organization_id: employeeProfile?.organization_id as string });
     if (error) {
       console.error(error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });

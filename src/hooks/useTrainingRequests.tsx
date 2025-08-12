@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type TrainingRequest = Tables<'training_requests'> & {
@@ -15,6 +16,7 @@ export function useTrainingRequests() {
   const [requests, setRequests] = useState<TrainingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchRequests = async () => {
     try {
@@ -61,7 +63,7 @@ export function useTrainingRequests() {
       // Get current employee ID
       const { data: employee } = await supabase
         .from('employees')
-        .select('id')
+        .select('id, organization_id')
         .eq('auth_user_id', user.id)
         .single();
 
@@ -72,7 +74,8 @@ export function useTrainingRequests() {
         .insert({
           ...requestData,
           requested_by: employee.id,
-          status: 'draft'
+          status: 'draft',
+          organization_id: employeeProfile?.organization_id || (employee as any).organization_id,
         })
         .select()
         .single();

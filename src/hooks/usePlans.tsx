@@ -90,6 +90,7 @@ export function usePlans() {
       // Add created_by if we have employee profile
       const insertData = {
         ...planInsertData,
+        organization_id: (planInsertData as any).organization_id ?? employeeProfile?.organization_id,
         created_by: employeeProfile?.id || null,
       };
 
@@ -119,6 +120,7 @@ export function usePlans() {
           plan_id: data.id,
           employee_id: employeeId,
           required: true,
+          organization_id: data.organization_id,
         }));
 
         const { error: employeeError } = await supabase
@@ -137,7 +139,8 @@ export function usePlans() {
           duration_hours: module.duration_hours,
           learning_outcomes: module.learning_outcomes,
           start_date: module.start_date || null,
-          end_date: module.end_date || null
+          end_date: module.end_date || null,
+          organization_id: data.organization_id,
         }));
 
         const { error: moduleError } = await supabase
@@ -154,7 +157,8 @@ export function usePlans() {
           name: resource.name,
           resource_type: resource.resource_type,
           url_or_path: resource.url_or_path,
-          description: resource.description
+          description: resource.description,
+          organization_id: data.organization_id,
         }));
 
         const { error: resourceError } = await supabase
@@ -169,7 +173,8 @@ export function usePlans() {
         const planTrainers = trainers.map(trainer => ({
           plan_id: data.id,
           trainer_id: trainer.trainer_id,
-          role: trainer.role || 'instructor'
+          role: trainer.role || 'instructor',
+          organization_id: data.organization_id,
         }));
 
         const { error: trainerError } = await supabase
@@ -186,7 +191,8 @@ export function usePlans() {
           evaluation_type: evaluation.evaluation_type,
           title: evaluation.title,
           description: evaluation.description,
-          questions: null
+          questions: null,
+          organization_id: data.organization_id,
         }));
 
         const { error: evaluationError } = await supabase
@@ -335,6 +341,7 @@ export function usePlans() {
         plan_id: planId,
         employee_id: employeeId,
         required: true,
+        organization_id: employeeProfile?.organization_id,
       }));
 
       const { error } = await supabase

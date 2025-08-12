@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type EvaluationTemplate = Tables<'evaluation_templates'>;
@@ -17,6 +18,7 @@ export function useEvaluations() {
   const [responses, setResponses] = useState<EvaluationResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchTemplates = async () => {
     try {
@@ -76,6 +78,24 @@ export function useEvaluations() {
 
   const createEvaluation = async (sessionId: string, templateId: string, responses: any, overallRating: number) => {
     try {
+      let empId = employeeProfile?.id as string | undefined;
+      let orgId = employeeProfile?.organization_id as string | undefined;
+
+      if (!empId || !orgId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('id, organization_id')
+          .eq('auth_user_id', user.id)
+          .single();
+
+        if (!employee) throw new Error('Employee record not found');
+        empId = employee.id;
+        orgId = employee.organization_id as string;
+      }
+
       const { data, error } = await supabase
         .from('evaluation_responses')
         .insert({
@@ -83,6 +103,8 @@ export function useEvaluations() {
           template_id: templateId,
           responses,
           overall_rating: overallRating,
+          employee_id: empId!,
+          organization_id: orgId!,
         })
         .select()
         .single();

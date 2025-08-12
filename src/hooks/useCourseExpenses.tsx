@@ -16,6 +16,7 @@ export function useCourseExpenses() {
   const [expenses, setExpenses] = useState<CourseExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchExpenses = async () => {
     try {
@@ -61,7 +62,7 @@ export function useCourseExpenses() {
 
       const { data: employee } = await supabase
         .from('employees')
-        .select('id')
+        .select('id, organization_id')
         .eq('auth_user_id', user.id)
         .single();
 
@@ -73,7 +74,8 @@ export function useCourseExpenses() {
           ...expenseData,
           employee_id: employee.id,
           recorded_by: employee.id,
-          status: 'pending'
+          status: 'pending',
+          organization_id: employeeProfile?.organization_id || employee.organization_id,
         })
         .select()
         .single();
