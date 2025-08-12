@@ -30,6 +30,7 @@ import AdminAuditLogs from "./pages/AdminAuditLogs";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import EmailTemplates from "./pages/EmailTemplates";
 import WorkflowObservability from "./pages/WorkflowObservability";
+import ProfileSettings from "./pages/ProfileSettings";
 import { ThemeProvider } from "next-themes";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
  
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute><TrainingLayout><AdminLayout><Admin /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               <Route path="/workflows" element={<ProtectedRoute><TrainingLayout><Workflows /></TrainingLayout></ProtectedRoute>} />
               <Route path="/my-tasks" element={<ProtectedRoute><TrainingLayout><MyTasks /></TrainingLayout></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><TrainingLayout><ProfileSettings /></TrainingLayout></ProtectedRoute>} />
               <Route path="/admin/gemini-config" element={<ProtectedRoute><TrainingLayout><AdminLayout><GeminiConfig /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               <Route path="/admin/roles" element={<ProtectedRoute><TrainingLayout><AdminLayout><AdminRoles /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               <Route path="/admin/audit-logs" element={<ProtectedRoute><TrainingLayout><AdminLayout><AdminAuditLogs /></AdminLayout></TrainingLayout></ProtectedRoute>} />
