@@ -32,13 +32,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Role check: only admin or manager can send notifications
-    const { data: roles, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id);
-    if (roleError) throw roleError;
-    const allowed = (roles || []).some(r => r.role === 'admin' || r.role === 'manager');
+    // Get current user's org and authorize within org
+    const { data: orgRes, error: orgErr } = await supabaseAuth.rpc('get_current_user_org');
+    if (orgErr) throw orgErr;
+    const org_id = orgRes as string | null;
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: "Organization not found for user" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Role check: only admin or manager in this org can send notifications
+    const [isAdminRes, isManagerRes] = await Promise.all([
+      supabaseAuth.rpc('has_org_role', { _user_id: userData.user.id, _role: 'admin', _org_id: org_id }),
+      supabaseAuth.rpc('has_org_role', { _user_id: userData.user.id, _role: 'manager', _org_id: org_id }),
+    ]);
+    const allowed = !!isAdminRes.data || !!isManagerRes.data;
     if (!allowed) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -48,15 +55,15 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "channel and message are required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Load org settings
+    // Load org settings scoped to user's org
     const { data: settings, error } = await supabaseAdmin
       .from('organization_settings')
       .select('*')
-      .limit(1)
+      .eq('organization_id', org_id)
       .maybeSingle();
     if (error) throw error;
     if (!settings) {
-      return new Response(JSON.stringify({ error: "No organization_settings row found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "No organization_settings for this organization" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     let webhook = '';

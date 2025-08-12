@@ -39,13 +39,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Role check: only admin or manager can send emails
-    const { data: roles, error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userData.user.id);
-    if (roleError) throw roleError;
-    const allowed = (roles || []).some(r => r.role === 'admin' || r.role === 'manager');
+    // Get current user's org and authorize within org
+    const { data: orgRes, error: orgErr } = await supabaseAuth.rpc('get_current_user_org');
+    if (orgErr) throw orgErr;
+    const org_id = orgRes as string | null;
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: "Organization not found for user" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Role check: only admin or manager in this org can send emails
+    const [isAdminRes, isManagerRes] = await Promise.all([
+      supabaseAuth.rpc('has_org_role', { _user_id: userData.user.id, _role: 'admin', _org_id: org_id }),
+      supabaseAuth.rpc('has_org_role', { _user_id: userData.user.id, _role: 'manager', _org_id: org_id }),
+    ]);
+    const allowed = !!isAdminRes.data || !!isManagerRes.data;
     if (!allowed) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -56,14 +63,24 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing 'to' recipients" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Load template
+    // Load template within org scope
     let template: any = null;
     if (template_id) {
-      const { data, error } = await supabaseAdmin.from('email_templates').select('*').eq('id', template_id).maybeSingle();
+      const { data, error } = await supabaseAdmin
+        .from('email_templates')
+        .select('*')
+        .eq('id', template_id)
+        .eq('organization_id', org_id)
+        .maybeSingle();
       if (error) throw error;
       template = data;
     } else if (template_name) {
-      const { data, error } = await supabaseAdmin.from('email_templates').select('*').eq('name', template_name).maybeSingle();
+      const { data, error } = await supabaseAdmin
+        .from('email_templates')
+        .select('*')
+        .eq('name', template_name)
+        .eq('organization_id', org_id)
+        .maybeSingle();
       if (error) throw error;
       template = data;
     } else {

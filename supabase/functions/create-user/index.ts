@@ -32,8 +32,18 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
-    // Authorize: only admins can create users
-    const { data: isAdmin } = await supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'admin' })
+    // Resolve caller's organization and authorize within org
+    const { data: orgRes, error: orgErr } = await supabaseUser.rpc('get_current_user_org')
+    if (orgErr) {
+      return new Response(JSON.stringify({ error: 'Unable to resolve organization' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+    const org_id = orgRes as string | null
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: 'Organization not found for user' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // Authorize: only admins in this org can create users
+    const { data: isAdmin } = await supabaseUser.rpc('has_org_role', { _user_id: user.id, _role: 'admin', _org_id: org_id })
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
@@ -69,12 +79,25 @@ serve(async (req) => {
     const sanitizedEmail = String(email).trim().toLowerCase()
     const sanitizedName = String(name).trim().substring(0, 100)
 
-    // Create user with admin privileges
+    // Load org subdomain for proper tenant assignment in handle_new_user trigger
+    const { data: orgRow, error: orgLoadErr } = await supabaseAdmin
+      .from('organizations')
+      .select('subdomain')
+      .eq('id', org_id)
+      .maybeSingle()
+    if (orgLoadErr || !orgRow?.subdomain) {
+      return new Response(
+        JSON.stringify({ error: 'Organization configuration missing (subdomain)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create user in this org (via subdomain metadata)
     const userCreateData: any = {
       email: sanitizedEmail,
       password,
       email_confirm: true,
-      user_metadata: { name: sanitizedName }
+      user_metadata: { name: sanitizedName, subdomain: orgRow.subdomain }
     }
 
     // Force password reset on first login if requested
@@ -87,8 +110,9 @@ serve(async (req) => {
     // Log security event (with actor)
     if (authUser?.user) {
       await supabaseAdmin.from('security_audit_logs').insert({
-        event_type: 'user_created_via_csv',
+        event_type: 'user_created',
         user_id: user.id,
+        organization_id: org_id,
         details: {
           created_user_email: sanitizedEmail,
           created_user_name: sanitizedName,

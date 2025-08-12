@@ -31,10 +31,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Require admin or manager role
+    // Resolve user's org and check roles within org
+    const { data: orgRes, error: orgErr } = await supabaseAsUser.rpc('get_current_user_org');
+    if (orgErr) {
+      return new Response(JSON.stringify({ error: 'Unable to resolve organization' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const org_id = orgRes as string | null;
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: 'Organization not found for user' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Require admin or manager role in this org
     const [isAdminRes, isManagerRes] = await Promise.all([
-      supabaseAsUser.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
-      supabaseAsUser.rpc('has_role', { _user_id: user.id, _role: 'manager' }),
+      supabaseAsUser.rpc('has_org_role', { _user_id: user.id, _role: 'admin', _org_id: org_id }),
+      supabaseAsUser.rpc('has_org_role', { _user_id: user.id, _role: 'manager', _org_id: org_id }),
     ]);
     const isAdmin = !!isAdminRes.data;
     const isManager = !!isManagerRes.data;

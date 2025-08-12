@@ -29,11 +29,21 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Authorize: admin, manager, or compliance
+    // Resolve user's organization
+    const { data: orgRes, error: orgErr } = await supabaseUser.rpc('get_current_user_org');
+    if (orgErr) {
+      return new Response(JSON.stringify({ error: 'Unable to resolve organization' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    const org_id = orgRes as string | null;
+    if (!org_id) {
+      return new Response(JSON.stringify({ error: 'Organization not found for user' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Authorize: admin, manager, or compliance in this org
     const [isAdminRes, isManagerRes, isComplianceRes] = await Promise.all([
-      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'admin' }),
-      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'manager' }),
-      supabaseUser.rpc('has_role', { _user_id: user.id, _role: 'compliance' }),
+      supabaseUser.rpc('has_org_role', { _user_id: user.id, _role: 'admin', _org_id: org_id }),
+      supabaseUser.rpc('has_org_role', { _user_id: user.id, _role: 'manager', _org_id: org_id }),
+      supabaseUser.rpc('has_org_role', { _user_id: user.id, _role: 'compliance', _org_id: org_id }),
     ]);
     const allowed = !!isAdminRes.data || !!isManagerRes.data || !!isComplianceRes.data;
     if (!allowed) {
@@ -51,11 +61,12 @@ serve(async (req) => {
       targetDate.setDate(targetDate.getDate() + days);
       const dateStr = targetDate.toISOString().split('T')[0];
 
-      // Find certificates expiring on the target date
+      // Find certificates expiring on the target date within org
       const { data: certificates, error } = await supabaseAdmin
         .from('employee_certificates')
         .select('id')
-        .eq('expiry_date', dateStr);
+        .eq('expiry_date', dateStr)
+        .eq('organization_id', org_id);
 
       if (error) {
         console.error(`Error fetching certificates for ${days} days:`, error);
@@ -72,6 +83,7 @@ serve(async (req) => {
     await supabaseAdmin
       .from('training_audit')
       .insert({
+        organization_id: org_id,
         table_name: 'certificate_alerts',
         row_pk: crypto.randomUUID(),
         action: 'alert_check',
