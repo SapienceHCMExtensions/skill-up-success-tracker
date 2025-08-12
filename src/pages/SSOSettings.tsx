@@ -24,7 +24,7 @@ export default function SSOSettings() {
   useEffect(() => {
     // Fetch existing settings for this subdomain (public, non-sensitive)
     const fetchSettings = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("sso_settings")
         .select("enable_azure, azure_tenant, enable_saml, saml_domain")
         .eq("subdomain", subdomain)
@@ -61,7 +61,7 @@ export default function SSOSettings() {
       saml_domain: samlDomain || null,
     };
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("sso_settings")
       .upsert(payload, { onConflict: "organization_id" });
 

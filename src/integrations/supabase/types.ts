@@ -1334,6 +1334,50 @@ export type Database = {
           },
         ]
       }
+      sso_settings: {
+        Row: {
+          azure_tenant: string | null
+          created_at: string
+          enable_azure: boolean
+          enable_saml: boolean
+          id: string
+          organization_id: string
+          saml_domain: string | null
+          subdomain: string
+          updated_at: string
+        }
+        Insert: {
+          azure_tenant?: string | null
+          created_at?: string
+          enable_azure?: boolean
+          enable_saml?: boolean
+          id?: string
+          organization_id: string
+          saml_domain?: string | null
+          subdomain: string
+          updated_at?: string
+        }
+        Update: {
+          azure_tenant?: string | null
+          created_at?: string
+          enable_azure?: boolean
+          enable_saml?: boolean
+          id?: string
+          organization_id?: string
+          saml_domain?: string | null
+          subdomain?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sso_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_audit: {
         Row: {
           action: string
@@ -1652,6 +1696,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_notification_prefs: {
+        Row: {
+          created_at: string
+          digest: string
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          organization_id: string
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          digest?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          organization_id: string
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          digest?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          organization_id?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

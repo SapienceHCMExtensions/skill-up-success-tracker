@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useMemo, useState } from 'react';
-
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -32,12 +30,12 @@ export default function Auth() {
 
   useEffect(() => {
     // Load public SSO settings for this subdomain
-    supabase
+    (supabase as any)
       .from('sso_settings')
       .select('enable_azure, azure_tenant, enable_saml, saml_domain')
       .eq('subdomain', currentSubdomain)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(({ data, error }: any) => {
         if (error) {
           console.warn('No SSO settings found for subdomain', currentSubdomain, error.message);
           return;
