@@ -10,6 +10,7 @@ import { useSessions } from '@/hooks/useSessions';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Session = Tables<'sessions'>;
@@ -28,6 +29,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const { employeeProfile } = useAuth();
   
   const [formData, setFormData] = useState({
     course_id: session?.course_id || '',
@@ -90,6 +92,12 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
     setLoading(true);
 
     try {
+      if (!employeeProfile?.organization_id) {
+        console.error('Organization context missing');
+        setLoading(false);
+        return;
+      }
+
       const sessionData = {
         ...formData,
         start_date: new Date(formData.start_date).toISOString(),
@@ -97,6 +105,7 @@ export function SessionDialog({ session, planId, trigger }: SessionDialogProps) 
         plan_id: planId || null,
         instructor_id: formData.instructor_id === 'none' || formData.instructor_id === '' ? null : formData.instructor_id,
         course_id: formData.course_id || null,
+        organization_id: employeeProfile.organization_id,
       };
 
       if (session) {

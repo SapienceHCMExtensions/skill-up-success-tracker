@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { UserPlus, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface BulkEnrollFromPlanDialogProps {
   planEmployees: any[];
@@ -18,6 +19,7 @@ export function BulkEnrollFromPlanDialog({ planEmployees, sessionId, onUpdate, t
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const handleEnrollAll = async () => {
     if (selectedEmployees.length === 0) return;
@@ -25,10 +27,20 @@ export function BulkEnrollFromPlanDialog({ planEmployees, sessionId, onUpdate, t
     try {
       setLoading(true);
       
+      if (!employeeProfile?.organization_id) {
+        toast({
+          title: "Error",
+          description: "Organization context missing. Please re-login.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const enrollmentData = selectedEmployees.map(employeeId => ({
         session_id: sessionId,
         employee_id: employeeId,
-        status: 'scheduled' as const
+        status: 'scheduled' as const,
+        organization_id: employeeProfile.organization_id,
       }));
 
       const { error } = await supabase

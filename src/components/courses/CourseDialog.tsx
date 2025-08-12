@@ -10,6 +10,7 @@ import { X, Plus, Sparkles } from 'lucide-react';
 import { useCourses } from '@/hooks/useCourses';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Course = Tables<'courses'>;
@@ -23,6 +24,7 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
   const { createCourse, updateCourse } = useCourses();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { employeeProfile } = useAuth();
   
   const [formData, setFormData] = useState({
     code: course?.code || '',
@@ -91,7 +93,12 @@ export function CourseDialog({ course, trigger }: CourseDialogProps) {
       if (course) {
         await updateCourse(course.id, formData);
       } else {
-        await createCourse(formData);
+        if (!employeeProfile?.organization_id) {
+          toast.error('Organization context missing. Please re-login.');
+          setLoading(false);
+          return;
+        }
+        await createCourse({ ...formData, organization_id: employeeProfile.organization_id });
       }
       setOpen(false);
       // Reset form if creating new course

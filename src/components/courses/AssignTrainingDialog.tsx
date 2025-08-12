@@ -10,6 +10,7 @@ import { Search, Users, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
+import { useAuth } from '@/hooks/useAuth';
 
 type Course = Tables<'courses'>;
 type Employee = Tables<'employees'>;
@@ -29,6 +30,7 @@ export function AssignTrainingDialog({ course, trigger }: AssignTrainingDialogPr
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [selectedSession, setSelectedSession] = useState<string>('');
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   const fetchEmployees = async () => {
     try {
@@ -69,13 +71,22 @@ export function AssignTrainingDialog({ course, trigger }: AssignTrainingDialogPr
       });
       return;
     }
-
     setLoading(true);
     try {
+      if (!employeeProfile?.organization_id) {
+        toast({
+          title: "Error",
+          description: "Organization context missing. Please re-login.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const enrollments = selectedEmployees.map(employeeId => ({
         employee_id: employeeId,
         session_id: selectedSession,
         status: 'scheduled' as const,
+        organization_id: employeeProfile.organization_id,
       }));
 
       const { error } = await supabase

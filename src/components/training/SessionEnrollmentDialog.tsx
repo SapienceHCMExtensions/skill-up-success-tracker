@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Users, UserPlus, UserMinus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import type { Tables } from '@/integrations/supabase/types';
 
 type SessionWithCourse = Tables<'sessions'> & {
@@ -34,6 +35,7 @@ export function SessionEnrollmentDialog({ session, onUpdate, trigger }: SessionE
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const { employeeProfile } = useAuth();
 
   useEffect(() => {
     if (open) {
@@ -92,10 +94,20 @@ export function SessionEnrollmentDialog({ session, onUpdate, trigger }: SessionE
     try {
       setLoading(true);
       
+      if (!employeeProfile?.organization_id) {
+        toast({
+          title: "Error",
+          description: "Organization context missing. Please re-login.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const enrollmentData = selectedEmployees.map(employeeId => ({
         session_id: session.id,
         employee_id: employeeId,
-        status: 'scheduled' as const
+        status: 'scheduled' as const,
+        organization_id: employeeProfile.organization_id,
       }));
 
       const { error } = await supabase

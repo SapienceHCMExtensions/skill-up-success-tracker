@@ -4,6 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { usePlans } from '@/hooks/usePlans';
+import { useAuth } from '@/hooks/useAuth';
+import { usePlans } from '@/hooks/usePlans';
 import { PlanGeneralInfo } from './PlanGeneralInfo';
 import { PlanContent } from './PlanContent';
 import { PlanDelivery } from './PlanDelivery';
@@ -25,6 +27,7 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const { employeeProfile } = useAuth();
   
   const [formData, setFormData] = useState({
     name: plan?.name || '',
@@ -83,7 +86,12 @@ export function PlanDialog({ plan, trigger }: PlanDialogProps) {
       if (plan) {
         await updatePlan(plan.id, submitData);
       } else {
-        await createPlan(submitData);
+        if (!employeeProfile?.organization_id) {
+          console.error('Organization context missing');
+          setLoading(false);
+          return;
+        }
+        await createPlan({ ...submitData, organization_id: employeeProfile.organization_id });
       }
       setOpen(false);
       // Reset form if creating new plan

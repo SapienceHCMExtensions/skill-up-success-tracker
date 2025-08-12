@@ -12,6 +12,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   userRole: string | null;
   employeeProfile: any | null;
+  currentSubdomain: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,63 +23,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<any | null>(null);
+  const [currentSubdomain, setCurrentSubdomain] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+  const detectSubdomain = () => {
+    try {
+      const host = window.location.hostname || '';
+      if (!host || host === 'localhost') return null;
+      const parts = host.split('.');
+      // e.g. app.company.com -> 'app', company.com -> 'company'
+      return parts.length >= 2 ? parts[0] : null;
+    } catch {
+      return null;
+    }
+  };
 
-        if (session?.user) {
-          // Immediately allow the app to render; fetch role/profile in background
-          setLoading(false);
-          setTimeout(async () => {
-            try {
-              const [roleResult, profileResult] = await Promise.all([
-                supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle(),
-                supabase.from('employees').select('*').eq('auth_user_id', session.user.id).maybeSingle()
-              ]);
-              setUserRole(roleResult?.data?.role || 'employee');
-              setEmployeeProfile(profileResult?.data ?? null);
-            } catch (err) {
-              console.error('Background fetch auth context failed:', err);
+useEffect(() => {
+  setCurrentSubdomain(detectSubdomain());
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        // Immediately allow the app to render; fetch role/profile in background
+        setLoading(false);
+        setTimeout(async () => {
+          try {
+            // Fetch profile first to get organization_id
+            const { data: profile, error: profileError } = await supabase
+              .from('employees')
+              .select('*')
+              .eq('auth_user_id', session.user.id)
+              .maybeSingle();
+            if (profileError) throw profileError;
+            setEmployeeProfile(profile ?? null);
+
+            let role: string | null = null;
+            if (profile?.organization_id) {
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', session.user.id)
+                .eq('organization_id', profile.organization_id)
+                .maybeSingle();
+              role = roleData?.role ?? null;
             }
-          }, 0);
-        } else {
-          setUserRole(null);
-          setEmployeeProfile(null);
-          setLoading(false);
-        }
-      }
-    );
-
-    // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Initial session check:', session?.user?.email);
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-        // Allow app to render immediately; fetch role/profile in background
-        setLoading(false);
-        try {
-          const [roleResult, profileResult] = await Promise.all([
-            supabase.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle(),
-            supabase.from('employees').select('*').eq('auth_user_id', session.user.id).maybeSingle()
-          ]);
-          setUserRole(roleResult?.data?.role || 'employee');
-          setEmployeeProfile(profileResult?.data ?? null);
-        } catch (err) {
-          console.error('Initial background fetch failed:', err);
-        }
+            setUserRole(role || 'employee');
+          } catch (err) {
+            console.error('Background fetch auth context failed:', err);
+          }
+        }, 0);
       } else {
+        setUserRole(null);
+        setEmployeeProfile(null);
         setLoading(false);
       }
-    });
+    }
+  );
 
-    return () => subscription.unsubscribe();
-  }, []);
+  // Check for existing session
+  supabase.auth.getSession().then(async ({ data: { session } }) => {
+    console.log('Initial session check:', session?.user?.email);
+    if (session) {
+      setSession(session);
+      setUser(session.user);
+      // Allow app to render immediately; fetch role/profile in background
+      setLoading(false);
+      try {
+        const { data: profile } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
+        setEmployeeProfile(profile ?? null);
+
+        let role: string | null = null;
+        if (profile?.organization_id) {
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('organization_id', profile.organization_id)
+            .maybeSingle();
+          role = roleData?.role ?? null;
+        }
+        setUserRole(role || 'employee');
+      } catch (err) {
+        console.error('Initial background fetch failed:', err);
+      }
+    } else {
+      setLoading(false);
+    }
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
 
   const signUp = async (email: string, password: string, name?: string, orgName?: string, subdomain?: string) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -147,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     userRole,
     employeeProfile,
+    currentSubdomain,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
