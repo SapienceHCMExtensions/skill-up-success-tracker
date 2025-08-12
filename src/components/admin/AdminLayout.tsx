@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -53,7 +54,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="space-y-4">
-      <header className="pt-1">
+      <header className="pt-1 flex items-center justify-between">
         <nav aria-label="Breadcrumbs">
           <Breadcrumb>
             <BreadcrumbList>
@@ -83,6 +84,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </BreadcrumbList>
           </Breadcrumb>
         </nav>
+        <ThemeToggle />
       </header>
 
       <main>{children}</main>

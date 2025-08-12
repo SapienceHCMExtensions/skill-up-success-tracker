@@ -178,6 +178,6 @@ All colors MUST be HSL. Professional corporate theme with emphasis on learning a
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
 }

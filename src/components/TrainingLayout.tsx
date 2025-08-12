@@ -6,6 +6,7 @@ import { LogOut, Shield } from "lucide-react"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { LanguageSelector } from "@/components/language/LanguageSelector"
 import { Link } from "react-router-dom"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface TrainingLayoutProps {
   children: React.ReactNode
@@ -31,6 +32,7 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
                 <div className="text-sm text-muted-foreground">
                   {t('common.welcome')}, {employeeProfile?.name || 'User'} ({userRole})
                 </div>
+                <ThemeToggle />
                 <LanguageSelector />
                 {userRole === 'admin' && (
                   <Button variant="ghost" size="sm" asChild>
@@ -47,7 +49,7 @@ export function TrainingLayout({ children }: TrainingLayoutProps) {
             </div>
           </header>
           
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 animate-fade-in">
             {children}
           </main>
         </div>

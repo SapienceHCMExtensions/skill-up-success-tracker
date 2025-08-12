@@ -30,14 +30,16 @@ import AdminAuditLogs from "./pages/AdminAuditLogs";
 import OrganizationSettings from "./pages/OrganizationSettings";
 import EmailTemplates from "./pages/EmailTemplates";
 import WorkflowObservability from "./pages/WorkflowObservability";
-
+import { ThemeProvider } from "next-themes";
+ 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <LanguageProvider>
-        <TooltipProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -68,6 +70,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+        </ThemeProvider>
     </LanguageProvider>
   </AuthProvider>
 </QueryClientProvider>
