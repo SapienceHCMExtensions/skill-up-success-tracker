@@ -15,30 +15,36 @@ export default function SSOSettings() {
 
   const [loading, setLoading] = useState(false);
   const [enableAzure, setEnableAzure] = useState(false);
-  const [azureTenant, setAzureTenant] = useState("");
+  const [azureClientId, setAzureClientId] = useState("");
+  const [azureClientSecret, setAzureClientSecret] = useState("");
+  const [azureTenantUrl, setAzureTenantUrl] = useState("");
+  const [azureCallbackUrl, setAzureCallbackUrl] = useState("");
   const [enableSaml, setEnableSaml] = useState(false);
   const [samlDomain, setSamlDomain] = useState("");
+  const [samlCallbackUrl, setSamlCallbackUrl] = useState("");
 
   const subdomain = useMemo(() => currentSubdomain || "default", [currentSubdomain]);
 
   useEffect(() => {
-    // Fetch existing settings for this subdomain (public, non-sensitive)
+    // Fetch existing settings for this subdomain (admin-only via secure RPC)
     const fetchSettings = async () => {
       const { data, error } = await (supabase as any)
-        .from("sso_settings")
-        .select("enable_azure, azure_tenant, enable_saml, saml_domain")
-        .eq("subdomain", subdomain)
-        .maybeSingle();
+        .rpc('get_admin_sso_settings', { _subdomain: subdomain });
 
       if (error) {
-        console.error("Failed to load SSO settings", error);
+        console.error('Failed to load admin SSO settings', error);
         return;
       }
-      if (data) {
-        setEnableAzure(!!data.enable_azure);
-        setAzureTenant(data.azure_tenant || "");
-        setEnableSaml(!!data.enable_saml);
-        setSamlDomain(data.saml_domain || "");
+      const row = Array.isArray(data) ? data[0] : data;
+      if (row) {
+        setEnableAzure(!!row.enable_azure);
+        setAzureClientId(row.azure_client_id || "");
+        setAzureClientSecret(row.azure_client_secret || "");
+        setAzureTenantUrl(row.azure_tenant_url || "");
+        setAzureCallbackUrl(row.azure_callback_url || "");
+        setEnableSaml(!!row.enable_saml);
+        setSamlDomain(row.saml_domain || "");
+        setSamlCallbackUrl(row.saml_callback_url || "");
       }
     };
     fetchSettings();
@@ -56,9 +62,13 @@ export default function SSOSettings() {
       organization_id: employeeProfile.organization_id,
       subdomain,
       enable_azure: enableAzure,
-      azure_tenant: azureTenant || null,
+      azure_client_id: azureClientId || null,
+      azure_client_secret: azureClientSecret || null,
+      azure_tenant_url: azureTenantUrl || null,
+      azure_callback_url: azureCallbackUrl || null,
       enable_saml: enableSaml,
       saml_domain: samlDomain || null,
+      saml_callback_url: samlCallbackUrl || null,
     };
 
     const { error } = await (supabase as any)
@@ -86,7 +96,7 @@ export default function SSOSettings() {
         <Card>
           <CardHeader>
             <CardTitle>Microsoft (Azure AD)</CardTitle>
-            <CardDescription>Toggle availability on the login page and optionally scope to a tenant. Client ID/Secret must be set in Supabase.</CardDescription>
+            <CardDescription>Store Azure OAuth settings securely, then configure the provider in Supabase.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -97,8 +107,20 @@ export default function SSOSettings() {
               <Switch id="enableAzure" checked={enableAzure} onCheckedChange={setEnableAzure} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="azureTenant">Azure Tenant Domain/ID (optional)</Label>
-              <Input id="azureTenant" placeholder="contoso.onmicrosoft.com or Tenant ID" value={azureTenant} onChange={(e) => setAzureTenant(e.target.value)} />
+              <Label htmlFor="azureClientId">Application (client) ID</Label>
+              <Input id="azureClientId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" value={azureClientId} onChange={(e) => setAzureClientId(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="azureClientSecret">Secret Value</Label>
+              <Input id="azureClientSecret" type="password" placeholder="••••••••••" value={azureClientSecret} onChange={(e) => setAzureClientSecret(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="azureTenantUrl">Azure Tenant URL (optional)</Label>
+              <Input id="azureTenantUrl" placeholder="https://login.microsoftonline.com/<tenant-id>" value={azureTenantUrl} onChange={(e) => setAzureTenantUrl(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="azureCallbackUrl">Callback URL (for OAuth)</Label>
+              <Input id="azureCallbackUrl" placeholder={`${window.location.origin} or your custom domain`} value={azureCallbackUrl} onChange={(e) => setAzureCallbackUrl(e.target.value)} />
             </div>
             <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save Azure Settings"}</Button>
           </CardContent>
@@ -121,6 +143,10 @@ export default function SSOSettings() {
               <Label htmlFor="samlDomain">SSO Email Domain</Label>
               <Input id="samlDomain" placeholder="yourcompany.com" value={samlDomain} onChange={(e) => setSamlDomain(e.target.value)} />
               <p className="text-xs text-muted-foreground">Users must belong to this email domain to use SAML sign-in.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="samlCallbackUrl">Callback URL (ACS URL)</Label>
+              <Input id="samlCallbackUrl" placeholder={`${window.location.origin}/auth/v1/sso/callback`} value={samlCallbackUrl} onChange={(e) => setSamlCallbackUrl(e.target.value)} />
             </div>
             <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save SAML Settings"}</Button>
           </CardContent>

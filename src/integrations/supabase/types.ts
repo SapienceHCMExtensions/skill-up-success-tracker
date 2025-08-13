@@ -1336,34 +1336,49 @@ export type Database = {
       }
       sso_settings: {
         Row: {
+          azure_callback_url: string | null
+          azure_client_id: string | null
+          azure_client_secret: string | null
           azure_tenant: string | null
+          azure_tenant_url: string | null
           created_at: string
           enable_azure: boolean
           enable_saml: boolean
           id: string
           organization_id: string
+          saml_callback_url: string | null
           saml_domain: string | null
           subdomain: string
           updated_at: string
         }
         Insert: {
+          azure_callback_url?: string | null
+          azure_client_id?: string | null
+          azure_client_secret?: string | null
           azure_tenant?: string | null
+          azure_tenant_url?: string | null
           created_at?: string
           enable_azure?: boolean
           enable_saml?: boolean
           id?: string
           organization_id: string
+          saml_callback_url?: string | null
           saml_domain?: string | null
           subdomain: string
           updated_at?: string
         }
         Update: {
+          azure_callback_url?: string | null
+          azure_client_id?: string | null
+          azure_client_secret?: string | null
           azure_tenant?: string | null
+          azure_tenant_url?: string | null
           created_at?: string
           enable_azure?: boolean
           enable_saml?: boolean
           id?: string
           organization_id?: string
+          saml_callback_url?: string | null
           saml_domain?: string | null
           subdomain?: string
           updated_at?: string
@@ -2006,6 +2021,21 @@ export type Database = {
       generate_secure_password: {
         Args: { length?: number }
         Returns: string
+      }
+      get_admin_sso_settings: {
+        Args: { _subdomain: string }
+        Returns: {
+          enable_azure: boolean
+          azure_tenant: string
+          azure_tenant_url: string
+          azure_client_id: string
+          azure_client_secret: string
+          azure_callback_url: string
+          enable_saml: boolean
+          saml_domain: string
+          saml_callback_url: string
+          organization_id: string
+        }[]
       }
       get_current_user_org: {
         Args: Record<PropertyKey, never>
