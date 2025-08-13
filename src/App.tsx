@@ -35,6 +35,7 @@ import { ThemeProvider } from "next-themes";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import Start from "./pages/Start";
 import SSOSettings from "./pages/SSOSettings";
+import AuthCallback from "./pages/AuthCallback";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -57,6 +58,7 @@ const App = () => (
             <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/" element={<ProtectedRoute><TrainingLayout><Start /></TrainingLayout></ProtectedRoute>} />
               <Route path="/courses" element={<ProtectedRoute><TrainingLayout><Courses /></TrainingLayout></ProtectedRoute>} />
               <Route path="/plans" element={<ProtectedRoute><TrainingLayout><Plans /></TrainingLayout></ProtectedRoute>} />

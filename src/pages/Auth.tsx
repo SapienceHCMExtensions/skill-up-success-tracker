@@ -89,7 +89,27 @@ export default function Auth() {
 
   const oauthSignIn = async (provider: 'google' | 'linkedin_oidc' | 'azure') => {
     try {
-      await supabase.auth.signInWithOAuth({ provider: provider as any, options: { redirectTo: window.location.origin } });
+      if (provider === 'azure') {
+        // Use custom Azure SSO for multi-tenant support
+        const response = await supabase.functions.invoke('azure-sso/initiate', {
+          body: { subdomain: currentSubdomain }
+        });
+        
+        if (response.error) {
+          console.error('Azure SSO error:', response.error);
+          return;
+        }
+        
+        if (response.data?.authUrl) {
+          window.location.href = response.data.authUrl;
+        }
+      } else {
+        // Use standard OAuth for Google and LinkedIn
+        await supabase.auth.signInWithOAuth({ 
+          provider: provider as any, 
+          options: { redirectTo: window.location.origin } 
+        });
+      }
     } catch (e) {
       console.error('OAuth error', e);
     }
@@ -99,10 +119,27 @@ export default function Auth() {
     try {
       const input = window.prompt('Enter your work email to continue with SSO');
       if (!input) return;
-      const domain = input.split('@')[1]?.trim();
-      if (!domain) return;
-      // @ts-ignore - type may vary depending on supabase-js version
-      await supabase.auth.signInWithSSO({ domain, redirectTo: window.location.origin });
+      
+      const email = input.trim();
+      if (!email.includes('@')) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      // Use custom SAML SSO for multi-tenant support
+      const response = await supabase.functions.invoke('saml-sso/initiate', {
+        body: { email, subdomain: currentSubdomain }
+      });
+      
+      if (response.error) {
+        console.error('SAML SSO error:', response.error);
+        alert(`SAML SSO error: ${response.error.message || 'Unknown error'}`);
+        return;
+      }
+      
+      if (response.data?.ssoUrl) {
+        window.location.href = response.data.ssoUrl;
+      }
     } catch (e) {
       console.error('SSO error', e);
     }
