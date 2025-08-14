@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -2018,6 +2018,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      detect_sso_provider: {
+        Args: { _email: string; _subdomain: string }
+        Returns: {
+          domain: string
+          enabled: boolean
+          provider: string
+        }[]
+      }
       generate_secure_password: {
         Args: { length?: number }
         Returns: string
@@ -2025,16 +2033,16 @@ export type Database = {
       get_admin_sso_settings: {
         Args: { _subdomain: string }
         Returns: {
-          enable_azure: boolean
-          azure_tenant: string
-          azure_tenant_url: string
+          azure_callback_url: string
           azure_client_id: string
           azure_client_secret: string
-          azure_callback_url: string
+          azure_tenant: string
+          azure_tenant_url: string
+          enable_azure: boolean
           enable_saml: boolean
-          saml_domain: string
-          saml_callback_url: string
           organization_id: string
+          saml_callback_url: string
+          saml_domain: string
         }[]
       }
       get_current_user_org: {
@@ -2054,17 +2062,21 @@ export type Database = {
       }
       has_org_role: {
         Args: {
-          _user_id: string
-          _role: Database["public"]["Enums"]["app_role"]
           _org_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
+        Returns: boolean
+      }
+      validate_sso_domain: {
+        Args: { _email: string; _provider: string; _subdomain: string }
         Returns: boolean
       }
     }

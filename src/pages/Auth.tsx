@@ -18,9 +18,10 @@ export default function Auth() {
   const { user, signIn, signUp, loading: authLoading } = useAuth();
 
   const [enableAzure, setEnableAzure] = useState(false);
-  const [azureTenant, setAzureTenant] = useState<string | null>(null);
   const [enableSaml, setEnableSaml] = useState(false);
   const [samlDomain, setSamlDomain] = useState<string | null>(null);
+  const [detectedProvider, setDetectedProvider] = useState<string | null>(null);
+  const [showSsoHint, setShowSsoHint] = useState(false);
 
   const currentSubdomain = useMemo(() => {
     const host = window.location.hostname;
@@ -41,9 +42,37 @@ export default function Auth() {
         if (row) {
           setEnableAzure(!!row.enable_azure);
           setEnableSaml(!!row.enable_saml);
+          // Get SAML domain for smart detection
+          if (row.saml_domain) {
+            setSamlDomain(row.saml_domain);
+          }
         }
       });
   }, [currentSubdomain]);
+
+  // Smart provider detection based on email
+  useEffect(() => {
+    if (email && (enableAzure || enableSaml)) {
+      const emailDomain = email.split('@')[1]?.toLowerCase();
+      if (emailDomain) {
+        // Check if email domain matches SAML domain
+        if (enableSaml && samlDomain && emailDomain === samlDomain.toLowerCase()) {
+          setDetectedProvider('saml');
+          setShowSsoHint(true);
+        } else if (enableAzure && emailDomain !== 'gmail.com' && emailDomain !== 'yahoo.com') {
+          // Suggest Azure for business domains (not personal email providers)
+          setDetectedProvider('azure');
+          setShowSsoHint(true);
+        } else {
+          setDetectedProvider(null);
+          setShowSsoHint(false);
+        }
+      }
+    } else {
+      setDetectedProvider(null);
+      setShowSsoHint(false);
+    }
+  }, [email, enableAzure, enableSaml, samlDomain]);
 
   console.log('Auth page render - user:', user, 'authLoading:', authLoading);
 
@@ -88,15 +117,20 @@ export default function Auth() {
   };
 
   const oauthSignIn = async (provider: 'google' | 'linkedin_oidc' | 'azure') => {
+    setLoading(true);
     try {
       if (provider === 'azure') {
         // Use custom Azure SSO for multi-tenant support
         const response = await supabase.functions.invoke('azure-sso/initiate', {
-          body: { subdomain: currentSubdomain }
+          body: { 
+            subdomain: currentSubdomain,
+            email: email || undefined // Include email for better domain validation
+          }
         });
         
         if (response.error) {
           console.error('Azure SSO error:', response.error);
+          alert(`Azure SSO error: ${response.error.message || 'Unknown error'}`);
           return;
         }
         
@@ -112,28 +146,41 @@ export default function Auth() {
       }
     } catch (e) {
       console.error('OAuth error', e);
+      alert('Authentication failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const samlSignIn = async () => {
+  const samlSignIn = async (emailToUse?: string) => {
+    setLoading(true);
     try {
-      const input = window.prompt('Enter your work email to continue with SSO');
-      if (!input) return;
+      let emailForSso = emailToUse || email;
       
-      const email = input.trim();
-      if (!email.includes('@')) {
+      if (!emailForSso) {
+        const input = window.prompt('Enter your work email to continue with SSO');
+        if (!input) {
+          setLoading(false);
+          return;
+        }
+        emailForSso = input.trim();
+      }
+      
+      if (!emailForSso.includes('@')) {
         alert('Please enter a valid email address');
+        setLoading(false);
         return;
       }
 
       // Use custom SAML SSO for multi-tenant support
       const response = await supabase.functions.invoke('saml-sso/initiate', {
-        body: { email, subdomain: currentSubdomain }
+        body: { email: emailForSso, subdomain: currentSubdomain }
       });
       
       if (response.error) {
         console.error('SAML SSO error:', response.error);
         alert(`SAML SSO error: ${response.error.message || 'Unknown error'}`);
+        setLoading(false);
         return;
       }
       
@@ -142,6 +189,16 @@ export default function Auth() {
       }
     } catch (e) {
       console.error('SSO error', e);
+      alert('SSO authentication failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleSsoSuggestion = () => {
+    if (detectedProvider === 'saml') {
+      samlSignIn(email);
+    } else if (detectedProvider === 'azure') {
+      oauthSignIn('azure');
     }
   };
   return (
@@ -257,6 +314,24 @@ export default function Auth() {
                     required
                     className="h-11"
                   />
+                  {showSsoHint && detectedProvider && (
+                    <div className="flex items-center gap-2 p-2 text-sm bg-blue-50 border border-blue-200 rounded-md">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-blue-700">
+                        We detected you can use {detectedProvider === 'saml' ? 'Company SSO' : 'Microsoft'} for faster sign-in.
+                      </span>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-blue-600 hover:text-blue-800"
+                        onClick={handleSsoSuggestion}
+                        disabled={loading}
+                      >
+                        Use SSO
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
@@ -294,13 +369,71 @@ export default function Auth() {
                 <div className="h-px bg-border w-full" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('google')}>Google</Button>
-                <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('linkedin_oidc')}>LinkedIn</Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-11" 
+                  onClick={() => oauthSignIn('google')}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  ) : (
+                    'Google'
+                  )}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-11" 
+                  onClick={() => oauthSignIn('linkedin_oidc')}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                  ) : (
+                    'LinkedIn'
+                  )}
+                </Button>
                 {enableAzure && (
-                  <Button type="button" variant="outline" className="h-11" onClick={() => oauthSignIn('azure')}>Microsoft</Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className={`h-11 ${detectedProvider === 'azure' ? 'border-blue-300 bg-blue-50' : ''}`}
+                    onClick={() => oauthSignIn('azure')}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      <>
+                        Microsoft
+                        {detectedProvider === 'azure' && (
+                          <span className="ml-1 text-xs text-blue-600">Recommended</span>
+                        )}
+                      </>
+                    )}
+                  </Button>
                 )}
                 {enableSaml && (
-                  <Button type="button" variant="outline" className="h-11" onClick={samlSignIn}>Company SSO (SAML)</Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className={`h-11 ${detectedProvider === 'saml' ? 'border-blue-300 bg-blue-50' : ''}`}
+                    onClick={() => samlSignIn()}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      <>
+                        Company SSO
+                        {detectedProvider === 'saml' && (
+                          <span className="ml-1 text-xs text-blue-600">Recommended</span>
+                        )}
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
               <div className="mt-6 text-center">

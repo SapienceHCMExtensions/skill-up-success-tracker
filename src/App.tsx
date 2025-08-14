@@ -35,6 +35,7 @@ import { ThemeProvider } from "next-themes";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import Start from "./pages/Start";
 import SSOSettings from "./pages/SSOSettings";
+import SSOTesting from "./pages/SSOTesting";
 import AuthCallback from "./pages/AuthCallback";
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/admin/email-templates" element={<ProtectedRoute><TrainingLayout><AdminLayout><EmailTemplates /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               <Route path="/admin/workflow-observability" element={<ProtectedRoute><TrainingLayout><AdminLayout><WorkflowObservability /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               <Route path="/admin/sso-settings" element={<ProtectedRoute><TrainingLayout><AdminLayout><SSOSettings /></AdminLayout></TrainingLayout></ProtectedRoute>} />
+              <Route path="/admin/sso-testing" element={<ProtectedRoute><TrainingLayout><AdminLayout><SSOTesting /></AdminLayout></TrainingLayout></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
