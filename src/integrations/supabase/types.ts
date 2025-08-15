@@ -2058,6 +2058,7 @@ export type Database = {
         Returns: {
           enable_azure: boolean
           enable_saml: boolean
+          saml_domain: string
         }[]
       }
       has_org_role: {
@@ -2074,6 +2075,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_sso_access: {
+        Args: { _access_type: string; _subdomain: string }
+        Returns: undefined
       }
       validate_sso_domain: {
         Args: { _email: string; _provider: string; _subdomain: string }

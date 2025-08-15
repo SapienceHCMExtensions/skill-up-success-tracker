@@ -34,20 +34,16 @@ export default function Auth() {
   }, []);
 
   useEffect(() => {
-    console.log('Loading SSO settings for subdomain:', currentSubdomain);
     // Load public SSO flags via secure function (no sensitive data exposed)
     (supabase as any)
       .rpc('get_public_sso_settings', { _subdomain: currentSubdomain })
       .then(({ data, error }: any) => {
-        console.log('SSO settings response:', { data, error, subdomain: currentSubdomain });
         if (error) {
           console.warn('SSO flags unavailable for', currentSubdomain, error.message);
           return;
         }
         const row = Array.isArray(data) ? data[0] : data;
-        console.log('Parsed SSO row:', row);
         if (row) {
-          console.log('Setting enableAzure to:', !!row.enable_azure);
           setEnableAzure(!!row.enable_azure);
           setEnableSaml(!!row.enable_saml);
           // Get SAML domain for smart detection
