@@ -25,6 +25,10 @@ export default function Auth() {
 
   const currentSubdomain = useMemo(() => {
     const host = window.location.hostname;
+    // For Lovable preview URLs, always use 'default'
+    if (host.includes('lovableproject.com') || host.includes('localhost')) {
+      return 'default';
+    }
     const parts = host.split('.');
     return parts.length > 2 ? parts[0] : 'default';
   }, []);
