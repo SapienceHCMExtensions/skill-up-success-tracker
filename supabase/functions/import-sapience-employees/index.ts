@@ -182,6 +182,8 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Starting import-sapience-employees function');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -190,6 +192,7 @@ Deno.serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('Missing authorization header');
       throw new Error('Missing authorization header');
     }
 
@@ -198,8 +201,11 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authError || !user) {
+      console.error('Authentication failed:', authError);
       throw new Error('Authentication failed');
     }
+
+    console.log('User authenticated:', user.id);
 
     // Get user's organization
     const { data: employee, error: empError } = await supabaseClient
@@ -209,6 +215,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (empError || !employee) {
+      console.error('User not found or not associated with an organization:', empError);
       throw new Error('User not found or not associated with an organization');
     }
 
@@ -218,15 +225,23 @@ Deno.serve(async (req) => {
     // Get organization settings
     const { data: settings, error: settingsError } = await supabaseClient
       .from('organization_settings')
-      .select('sapience_hcm_url')
+      .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password')
       .eq('organization_id', orgId)
       .single();
 
+    console.log('Settings retrieved:', { 
+      hasUrl: !!settings?.sapience_hcm_url,
+      hasUsername: !!settings?.sapience_hcm_username,
+      hasPassword: !!settings?.sapience_hcm_password
+    });
+
     if (settingsError || !settings) {
+      console.error('Failed to retrieve organization settings:', settingsError);
       throw new Error('Failed to retrieve organization settings');
     }
 
     if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
+      console.error('Missing Sapience HCM configuration');
       throw new Error('Sapience HCM not configured. Please go to Organization Settings and enter your Sapience HCM URL, username, and password, then save the settings before importing employee data.');
     }
 
@@ -313,6 +328,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in import-sapience-employees function:', error);
+    console.error('Error stack:', error.stack);
     return new Response(JSON.stringify({
       success: false,
       error: error.message
