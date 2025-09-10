@@ -33,29 +33,29 @@ interface SapienceEmployeeResponse {
 }
 
 async function refreshSapienceToken(supabase: any, orgId: string): Promise<string | null> {
-  console.log('Attempting to refresh Sapience HCM token for org:', orgId);
-  
-  // Get current organization settings
-  const { data: settings, error: settingsError } = await supabase
-    .from('organization_settings')
-    .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password')
-    .eq('organization_id', orgId)
-    .single();
-
-  if (settingsError || !settings) {
-    console.error('Failed to get organization settings:', settingsError);
-    return null;
-  }
-
-  if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
-    console.error('Missing Sapience HCM configuration');
-    return null;
-  }
-
-  const loginUrl = `${settings.sapience_hcm_url}/api/account/login`;
-  console.log('Attempting login to:', loginUrl);
-
   try {
+    console.log('Attempting to refresh Sapience HCM token for org:', orgId);
+    
+    // Get current organization settings
+    const { data: settings, error: settingsError } = await supabase
+      .from('organization_settings')
+      .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password')
+      .eq('organization_id', orgId)
+      .single();
+
+    if (settingsError || !settings) {
+      console.error('Failed to get organization settings:', settingsError);
+      return null;
+    }
+
+    if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
+      console.error('Missing Sapience HCM configuration');
+      return null;
+    }
+
+    const loginUrl = `${settings.sapience_hcm_url}/api/account/login`;
+    console.log('Attempting login to:', loginUrl);
+
     const loginResponse = await fetch(loginUrl, {
       method: 'POST',
       headers: {
@@ -69,6 +69,8 @@ async function refreshSapienceToken(supabase: any, orgId: string): Promise<strin
 
     if (!loginResponse.ok) {
       console.error('Login failed:', loginResponse.status, loginResponse.statusText);
+      const responseText = await loginResponse.text();
+      console.error('Login response body:', responseText);
       return null;
     }
 
@@ -102,37 +104,43 @@ async function refreshSapienceToken(supabase: any, orgId: string): Promise<strin
 }
 
 async function getValidToken(supabase: any, orgId: string): Promise<string | null> {
-  // Get current token and expiry
-  const { data: settings, error } = await supabase
-    .from('organization_settings')
-    .select('sapience_hcm_token, sapience_hcm_token_expires_at')
-    .eq('organization_id', orgId)
-    .single();
+  try {
+    console.log('Checking existing token validity...');
+    // Get current token and expiry
+    const { data: settings, error } = await supabase
+      .from('organization_settings')
+      .select('sapience_hcm_token, sapience_hcm_token_expires_at')
+      .eq('organization_id', orgId)
+      .single();
 
-  if (error || !settings) {
-    console.error('Failed to get organization settings:', error);
+    if (error || !settings) {
+      console.error('Failed to get organization settings in getValidToken:', error);
+      return null;
+    }
+
+    const currentToken = settings.sapience_hcm_token;
+    const expiryTime = settings.sapience_hcm_token_expires_at;
+
+    // Check if token exists and is not expired
+    if (currentToken && expiryTime) {
+      const expiry = new Date(expiryTime);
+      const now = new Date();
+      
+      // Add 5 minute buffer to avoid using tokens that are about to expire
+      const bufferTime = new Date(now.getTime() + 5 * 60 * 1000);
+      
+      if (expiry > bufferTime) {
+        console.log('Using existing valid token');
+        return currentToken;
+      }
+    }
+
+    console.log('Token is missing or expired, refreshing...');
+    return await refreshSapienceToken(supabase, orgId);
+  } catch (error) {
+    console.error('Error in getValidToken:', error);
     return null;
   }
-
-  const currentToken = settings.sapience_hcm_token;
-  const expiryTime = settings.sapience_hcm_token_expires_at;
-
-  // Check if token exists and is not expired
-  if (currentToken && expiryTime) {
-    const expiry = new Date(expiryTime);
-    const now = new Date();
-    
-    // Add 5 minute buffer to avoid using tokens that are about to expire
-    const bufferTime = new Date(now.getTime() + 5 * 60 * 1000);
-    
-    if (expiry > bufferTime) {
-      console.log('Using existing valid token');
-      return currentToken;
-    }
-  }
-
-  console.log('Token is missing or expired, refreshing...');
-  return await refreshSapienceToken(supabase, orgId);
 }
 
 async function fetchSapienceEmployees(baseUrl: string, token: string): Promise<SapienceEmployee[]> {
@@ -246,13 +254,18 @@ Deno.serve(async (req) => {
     }
 
     // Get valid token
+    console.log('Getting valid token...');
     const validToken = await getValidToken(supabaseClient, orgId);
     if (!validToken) {
+      console.error('Failed to obtain valid Sapience HCM token');
       throw new Error('Failed to obtain valid Sapience HCM token');
     }
+    console.log('Valid token obtained');
 
     // Fetch employees from Sapience HCM
+    console.log('Fetching employees from Sapience HCM...');
     const sapienceEmployees = await fetchSapienceEmployees(settings.sapience_hcm_url, validToken);
+    console.log(`Fetched ${sapienceEmployees.length} employees from Sapience HCM`);
     
     if (sapienceEmployees.length === 0) {
       return new Response(JSON.stringify({ 
