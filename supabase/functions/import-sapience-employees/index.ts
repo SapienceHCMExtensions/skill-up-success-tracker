@@ -190,10 +190,10 @@ async function refreshTokenIfNeeded(supabase: any, orgId: string): Promise<strin
   }
 }
 
-function mapSapienceToSupabase(sapienceEmployee: SapienceEmployee, orgId: string) {
+function mapSapienceToSupabase(sapienceEmployee: any, orgId: string) {
   return {
-    name: `${sapienceEmployee.FirstName} ${sapienceEmployee.LastName}`.trim(),
-    email: sapienceEmployee.Email,
+    name: sapienceEmployee.fullNameOnCard || `${sapienceEmployee.FirstName || ''} ${sapienceEmployee.LastName || ''}`.trim(),
+    email: sapienceEmployee.primaryContact?.email || sapienceEmployee.Email,
     organization_id: orgId,
   };
 }
@@ -288,8 +288,11 @@ Deno.serve(async (req) => {
     const skipped = [];
 
     for (const sapienceEmp of sapienceEmployees) {
-      // Validate required fields
-      if (!sapienceEmp.Email || !sapienceEmp.FirstName) {
+      // Validate required fields using the correct field paths
+      const email = sapienceEmp.primaryContact?.email || sapienceEmp.Email;
+      const name = sapienceEmp.fullNameOnCard || `${sapienceEmp.FirstName || ''} ${sapienceEmp.LastName || ''}`.trim();
+      
+      if (!email || !name) {
         skipped.push({
           id: sapienceEmp.Id,
           reason: 'Missing required fields (email or name)'
