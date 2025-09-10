@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.saml-sso]
 verify_jwt = false
+
+[functions.sapience-hcm-test]
+verify_jwt = true

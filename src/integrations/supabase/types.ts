@@ -705,6 +705,11 @@ export type Database = {
           logo_url: string | null
           org_name: string
           organization_id: string
+          sapience_hcm_password: string | null
+          sapience_hcm_token: string | null
+          sapience_hcm_token_expires_at: string | null
+          sapience_hcm_url: string | null
+          sapience_hcm_username: string | null
           slack_webhook_url: string | null
           teams_webhook_url: string | null
           timezone: string
@@ -721,6 +726,11 @@ export type Database = {
           logo_url?: string | null
           org_name?: string
           organization_id: string
+          sapience_hcm_password?: string | null
+          sapience_hcm_token?: string | null
+          sapience_hcm_token_expires_at?: string | null
+          sapience_hcm_url?: string | null
+          sapience_hcm_username?: string | null
           slack_webhook_url?: string | null
           teams_webhook_url?: string | null
           timezone?: string
@@ -737,6 +747,11 @@ export type Database = {
           logo_url?: string | null
           org_name?: string
           organization_id?: string
+          sapience_hcm_password?: string | null
+          sapience_hcm_token?: string | null
+          sapience_hcm_token_expires_at?: string | null
+          sapience_hcm_url?: string | null
+          sapience_hcm_username?: string | null
           slack_webhook_url?: string | null
           teams_webhook_url?: string | null
           timezone?: string
