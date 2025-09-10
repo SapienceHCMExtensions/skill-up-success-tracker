@@ -116,6 +116,8 @@ export default function OrganizationSettings() {
         sapience_hcm_password: settings?.sapience_hcm_password ?? '',
       };
 
+      console.log('Saving settings:', updateFields);
+
       if (settings?.id) {
         const { error } = await supabase
           .from('organization_settings')
@@ -170,16 +172,20 @@ export default function OrganizationSettings() {
           description: data.message 
         });
         
-        // Refresh settings to get the updated token
+        // Refresh settings to get the updated token, but preserve form values
         const { data: settingsData } = await supabase
           .from('organization_settings')
-          .select('*')
+          .select('sapience_hcm_token, sapience_hcm_token_expires_at')
           .eq('organization_id', orgId)
           .limit(1)
           .maybeSingle();
           
         if (settingsData) {
-          setSettings(prev => ({ ...prev, ...settingsData }));
+          setSettings(prev => ({ 
+            ...prev, 
+            sapience_hcm_token: settingsData.sapience_hcm_token,
+            sapience_hcm_token_expires_at: settingsData.sapience_hcm_token_expires_at
+          }));
         }
       } else {
         throw new Error(data.error || 'Connection test failed');

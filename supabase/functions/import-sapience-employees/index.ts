@@ -227,7 +227,7 @@ Deno.serve(async (req) => {
     }
 
     if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
-      throw new Error('Sapience HCM not configured. Please go to Organization Settings and configure your Sapience HCM URL, username, and password first.');
+      throw new Error('Sapience HCM not configured. Please go to Organization Settings and enter your Sapience HCM URL, username, and password, then save the settings before importing employee data.');
     }
 
     // Get valid token
