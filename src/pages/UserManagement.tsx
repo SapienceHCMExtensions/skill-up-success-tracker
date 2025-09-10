@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CsvImport } from '@/components/users/CsvImport';
+import { SapienceHcmImport } from '@/components/users/SapienceHcmImport';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Search, UserPlus, Settings } from 'lucide-react';
+import { Users, Search, UserPlus, Settings, Database } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Employee = Tables<'employees'> & {
@@ -104,6 +105,10 @@ export default function UserManagement() {
             <Settings className="w-4 h-4" />
             CSV Import
           </TabsTrigger>
+          <TabsTrigger value="sapience" className="flex items-center gap-2">
+            <Database className="w-4 h-4" />
+            Sapience HCM
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
@@ -174,6 +179,10 @@ export default function UserManagement() {
 
         <TabsContent value="import" className="space-y-4">
           <CsvImport onImportComplete={handleImportComplete} />
+        </TabsContent>
+
+        <TabsContent value="sapience" className="space-y-4">
+          <SapienceHcmImport onImportComplete={handleImportComplete} />
         </TabsContent>
       </Tabs>
     </div>
