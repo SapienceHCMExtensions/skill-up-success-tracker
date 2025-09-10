@@ -30,24 +30,45 @@ async function fetchSapienceEmployees(token: string): Promise<SapienceEmployee[]
   // Using the mock endpoint as specified by the user
   const employeesUrl = 'https://stoplight.io/mocks/cartelit/sapience-hcm/12673758/api/EmployeeManagement/Employee/GetEmployeeFullDetails/';
   console.log('Fetching employees from mock endpoint:', employeesUrl);
+  console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
   try {
+    const requestHeaders = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    
+    console.log('Request headers:', Object.keys(requestHeaders));
+    
     const response = await fetch(employeesUrl, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+      headers: requestHeaders,
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response statusText:', response.statusText);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Raw response text:', responseText);
+
     if (!response.ok) {
-      const responseText = await response.text();
-      console.error('API response error:', response.status, response.statusText, responseText);
-      throw new Error(`Failed to fetch employees: ${response.status} ${response.statusText}`);
+      console.error('API response error - Status:', response.status);
+      console.error('API response error - StatusText:', response.statusText);
+      console.error('API response error - Body:', responseText);
+      throw new Error(`Failed to fetch employees: ${response.status} ${response.statusText}. Response: ${responseText}`);
     }
 
-    const responseData: SapienceEmployeeResponse = await response.json();
-    console.log('API response:', responseData);
+    let responseData: SapienceEmployeeResponse;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      throw new Error(`Invalid JSON response: ${responseText}`);
+    }
+    
+    console.log('Parsed API response:', responseData);
     
     if (!responseData.Success) {
       throw new Error(`API returned error: ${responseData.Message}`);
@@ -56,7 +77,7 @@ async function fetchSapienceEmployees(token: string): Promise<SapienceEmployee[]
     console.log(`Successfully fetched ${responseData.Data?.length || 0} employees`);
     return responseData.Data || [];
   } catch (error) {
-    console.error('Error fetching employees:', error);
+    console.error('Error in fetchSapienceEmployees:', error);
     throw error;
   }
 }
