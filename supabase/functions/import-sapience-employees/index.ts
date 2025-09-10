@@ -26,10 +26,10 @@ interface SapienceEmployeeResponse {
   Message?: string;
 }
 
-async function fetchSapienceEmployees(token: string): Promise<SapienceEmployee[]> {
-  // Using the correct Sapience HCM endpoint
-  const employeesUrl = 'https://demo.sapiencehcm.com/api/EmployeeManagement/Employee/GetEmployeeFullDetails';
-  console.log('Fetching employees from Sapience HCM endpoint:', employeesUrl);
+async function fetchSapienceEmployees(token: string, sapienceHcmUrl: string): Promise<SapienceEmployee[]> {
+  // Construct the endpoint dynamically using the organization's Sapience HCM URL
+  const employeesUrl = `${sapienceHcmUrl.replace(/\/$/, '')}/api/EmployeeManagement/Employee/GetEmployeeFullDetails`;
+  console.log('Fetching employees from dynamic Sapience HCM endpoint:', employeesUrl);
   console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
   try {
@@ -227,6 +227,22 @@ Deno.serve(async (req) => {
     const orgId = employee.organization_id;
     console.log('Processing import for organization:', orgId);
 
+    // Get organization settings to get the Sapience HCM URL
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('organization_settings')
+      .select('sapience_hcm_url, sapience_hcm_token, sapience_hcm_token_expires_at')
+      .eq('organization_id', orgId)
+      .single();
+
+    if (settingsError || !settings) {
+      console.error('Failed to get organization settings:', settingsError);
+      throw new Error('Failed to retrieve organization settings');
+    }
+
+    if (!settings.sapience_hcm_url) {
+      throw new Error('Sapience HCM URL not configured. Please go to Organization Settings and configure your Sapience HCM URL.');
+    }
+
     // Get a valid token (existing or refreshed)
     const validToken = await refreshTokenIfNeeded(supabaseClient, orgId);
     if (!validToken) {
@@ -234,8 +250,8 @@ Deno.serve(async (req) => {
     }
     console.log('Valid token obtained');
 
-    // Fetch employees from Sapience HCM mock endpoint
-    const sapienceEmployees = await fetchSapienceEmployees(validToken);
+    // Fetch employees from Sapience HCM using the dynamic endpoint
+    const sapienceEmployees = await fetchSapienceEmployees(validToken, settings.sapience_hcm_url);
     console.log(`Fetched ${sapienceEmployees.length} employees from Sapience HCM`);
     
     if (sapienceEmployees.length === 0) {
