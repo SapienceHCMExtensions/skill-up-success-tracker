@@ -222,8 +222,12 @@ Deno.serve(async (req) => {
       .eq('organization_id', orgId)
       .single();
 
-    if (settingsError || !settings?.sapience_hcm_url) {
-      throw new Error('Sapience HCM not configured for this organization');
+    if (settingsError || !settings) {
+      throw new Error('Failed to retrieve organization settings');
+    }
+
+    if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
+      throw new Error('Sapience HCM not configured. Please go to Organization Settings and configure your Sapience HCM URL, username, and password first.');
     }
 
     // Get valid token

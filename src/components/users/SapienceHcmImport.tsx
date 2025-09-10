@@ -86,6 +86,13 @@ export function SapienceHcmImport({ onImportComplete }: SapienceHcmImportProps) 
           Import employee data from your connected Sapience HCM system. This will fetch all employees
           and add them to your organization if they don't already exist.
         </p>
+        
+        <Alert className="border-blue-500">
+          <AlertCircle className="w-4 h-4 text-blue-500" />
+          <AlertDescription>
+            <strong>Prerequisites:</strong> Make sure you have configured your Sapience HCM connection in Organization Settings first, including the URL, username, and password.
+          </AlertDescription>
+        </Alert>
 
         {lastResult && (
           <Alert className={lastResult.success ? 'border-green-500' : 'border-red-500'}>
