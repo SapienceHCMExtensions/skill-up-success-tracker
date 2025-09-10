@@ -323,7 +323,7 @@ export default function OrganizationSettings() {
               <div>
                 <Label>Authentication Token</Label>
                 <Input 
-                  value={settings?.sapience_hcm_token ?? ''} 
+                  value={settings?.sapience_hcm_token ? "••••••••••••••••••••" : ""} 
                   readOnly
                   placeholder="Token will appear here after successful connection test"
                   className="bg-muted"
