@@ -295,13 +295,16 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error in import-sapience-employees function:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     const errorResponse = {
       success: false,
-      error: error.message || 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+      details: error instanceof Error ? error.stack : String(error)
     };
     
     return new Response(JSON.stringify(errorResponse), {
-      status: 500,
+      status: 200, // Return 200 with error in body for better debugging
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

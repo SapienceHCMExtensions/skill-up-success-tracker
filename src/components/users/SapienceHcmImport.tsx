@@ -44,8 +44,15 @@ export function SapienceHcmImport({ onImportComplete }: SapienceHcmImportProps) 
         },
       });
 
+      console.log('Edge function response:', response);
+
       if (response.error) {
-        throw new Error(response.error.message || 'Import failed');
+        console.error('Edge function error:', response.error);
+        throw new Error(response.error.message || JSON.stringify(response.error) || 'Import failed');
+      }
+
+      if (!response.data) {
+        throw new Error('No data returned from edge function');
       }
 
       const result: ImportResult = response.data;
