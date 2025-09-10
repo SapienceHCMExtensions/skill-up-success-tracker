@@ -19,12 +19,6 @@ interface SapienceEmployee {
   Status?: string;
 }
 
-interface SapienceLoginResponse {
-  Token: string;
-  ExpiresIn: number;
-  TokenType: string;
-}
-
 interface SapienceEmployeeResponse {
   Data: SapienceEmployee[];
   TotalRecords: number;
@@ -32,27 +26,82 @@ interface SapienceEmployeeResponse {
   Message?: string;
 }
 
-async function refreshSapienceToken(supabase: any, orgId: string): Promise<string | null> {
+async function fetchSapienceEmployees(token: string): Promise<SapienceEmployee[]> {
+  // Using the mock endpoint as specified by the user
+  const employeesUrl = 'https://stoplight.io/mocks/cartelit/sapience-hcm/12673758/api/EmployeeManagement/Employee/GetEmployeeFullDetails/';
+  console.log('Fetching employees from mock endpoint:', employeesUrl);
+
   try {
-    console.log('Attempting to refresh Sapience HCM token for org:', orgId);
+    const response = await fetch(employeesUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const responseText = await response.text();
+      console.error('API response error:', response.status, response.statusText, responseText);
+      throw new Error(`Failed to fetch employees: ${response.status} ${response.statusText}`);
+    }
+
+    const responseData: SapienceEmployeeResponse = await response.json();
+    console.log('API response:', responseData);
     
-    // Get current organization settings
+    if (!responseData.Success) {
+      throw new Error(`API returned error: ${responseData.Message}`);
+    }
+
+    console.log(`Successfully fetched ${responseData.Data?.length || 0} employees`);
+    return responseData.Data || [];
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    throw error;
+  }
+}
+
+async function refreshTokenIfNeeded(supabase: any, orgId: string): Promise<string | null> {
+  try {
+    console.log('Getting organization settings and token...');
+    
+    // Get current organization settings including token
     const { data: settings, error: settingsError } = await supabase
       .from('organization_settings')
-      .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password')
+      .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password, sapience_hcm_token, sapience_hcm_token_expires_at')
       .eq('organization_id', orgId)
       .single();
 
     if (settingsError || !settings) {
       console.error('Failed to get organization settings:', settingsError);
-      return null;
+      throw new Error('Failed to retrieve organization settings');
     }
 
+    const currentToken = settings.sapience_hcm_token;
+    const expiryTime = settings.sapience_hcm_token_expires_at;
+
+    // Check if we have a valid token
+    if (currentToken && expiryTime) {
+      const expiry = new Date(expiryTime);
+      const now = new Date();
+      
+      // Add 5 minute buffer to avoid using tokens about to expire
+      const bufferTime = new Date(now.getTime() + 5 * 60 * 1000);
+      
+      if (expiry > bufferTime) {
+        console.log('Using existing valid token');
+        return currentToken;
+      }
+    }
+
+    console.log('Token is missing or expired, attempting refresh...');
+    
+    // Check if we have login credentials
     if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
-      console.error('Missing Sapience HCM configuration');
-      return null;
+      throw new Error('Sapience HCM not configured. Please go to Organization Settings and enter your Sapience HCM URL, username, and password.');
     }
 
+    // Refresh the token
     const loginUrl = `${settings.sapience_hcm_url}/api/account/login`;
     console.log('Attempting login to:', loginUrl);
 
@@ -68,108 +117,36 @@ async function refreshSapienceToken(supabase: any, orgId: string): Promise<strin
     });
 
     if (!loginResponse.ok) {
-      console.error('Login failed:', loginResponse.status, loginResponse.statusText);
       const responseText = await loginResponse.text();
-      console.error('Login response body:', responseText);
-      return null;
+      console.error('Login failed:', loginResponse.status, loginResponse.statusText, responseText);
+      throw new Error(`Failed to login to Sapience HCM: ${loginResponse.status} ${loginResponse.statusText}`);
     }
 
-    const loginData: SapienceLoginResponse = await loginResponse.json();
+    const loginData = await loginResponse.json();
     const newToken = loginData.Token;
-    const expiresIn = loginData.ExpiresIn || 3600; // Default 1 hour
+    const expiresIn = loginData.ExpiresIn || 3600;
 
     // Calculate expiry time
-    const expiryTime = new Date(Date.now() + expiresIn * 1000);
+    const newExpiryTime = new Date(Date.now() + expiresIn * 1000);
 
-    // Update the token in organization settings
+    // Update the token in database
     const { error: updateError } = await supabase
       .from('organization_settings')
       .update({
         sapience_hcm_token: newToken,
-        sapience_hcm_token_expires_at: expiryTime.toISOString(),
+        sapience_hcm_token_expires_at: newExpiryTime.toISOString(),
       })
       .eq('organization_id', orgId);
 
     if (updateError) {
       console.error('Failed to update token:', updateError);
-      return null;
+      throw new Error('Failed to save refreshed token');
     }
 
-    console.log('Token refreshed successfully, expires at:', expiryTime);
+    console.log('Token refreshed successfully, expires at:', newExpiryTime);
     return newToken;
   } catch (error) {
-    console.error('Error refreshing token:', error);
-    return null;
-  }
-}
-
-async function getValidToken(supabase: any, orgId: string): Promise<string | null> {
-  try {
-    console.log('Checking existing token validity...');
-    // Get current token and expiry
-    const { data: settings, error } = await supabase
-      .from('organization_settings')
-      .select('sapience_hcm_token, sapience_hcm_token_expires_at')
-      .eq('organization_id', orgId)
-      .single();
-
-    if (error || !settings) {
-      console.error('Failed to get organization settings in getValidToken:', error);
-      return null;
-    }
-
-    const currentToken = settings.sapience_hcm_token;
-    const expiryTime = settings.sapience_hcm_token_expires_at;
-
-    // Check if token exists and is not expired
-    if (currentToken && expiryTime) {
-      const expiry = new Date(expiryTime);
-      const now = new Date();
-      
-      // Add 5 minute buffer to avoid using tokens that are about to expire
-      const bufferTime = new Date(now.getTime() + 5 * 60 * 1000);
-      
-      if (expiry > bufferTime) {
-        console.log('Using existing valid token');
-        return currentToken;
-      }
-    }
-
-    console.log('Token is missing or expired, refreshing...');
-    return await refreshSapienceToken(supabase, orgId);
-  } catch (error) {
-    console.error('Error in getValidToken:', error);
-    return null;
-  }
-}
-
-async function fetchSapienceEmployees(baseUrl: string, token: string): Promise<SapienceEmployee[]> {
-  const employeesUrl = `${baseUrl}/api/EmployeeManagement/Employee/GetEmployeeFullDetails`;
-  console.log('Fetching employees from:', employeesUrl);
-
-  try {
-    const response = await fetch(employeesUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch employees: ${response.status} ${response.statusText}`);
-    }
-
-    const responseData: SapienceEmployeeResponse = await response.json();
-    
-    if (!responseData.Success) {
-      throw new Error(`API returned error: ${responseData.Message}`);
-    }
-
-    console.log(`Successfully fetched ${responseData.Data?.length || 0} employees`);
-    return responseData.Data || [];
-  } catch (error) {
-    console.error('Error fetching employees:', error);
+    console.error('Error in refreshTokenIfNeeded:', error);
     throw error;
   }
 }
@@ -179,8 +156,6 @@ function mapSapienceToSupabase(sapienceEmployee: SapienceEmployee, orgId: string
     name: `${sapienceEmployee.FirstName} ${sapienceEmployee.LastName}`.trim(),
     email: sapienceEmployee.Email,
     organization_id: orgId,
-    // Map additional fields if they exist in your employees table
-    // You might need to handle department mapping separately
   };
 }
 
@@ -192,19 +167,20 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting import-sapience-employees function');
     
+    // Create supabase client with service role key
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authorization header
+    // Get and validate the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('Missing authorization header');
       throw new Error('Missing authorization header');
     }
 
-    // Set the auth context for RLS
+    // Authenticate the user using the provided token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
@@ -215,7 +191,7 @@ Deno.serve(async (req) => {
 
     console.log('User authenticated:', user.id);
 
-    // Get user's organization
+    // Get user's organization ID
     const { data: employee, error: empError } = await supabaseClient
       .from('employees')
       .select('organization_id')
@@ -230,41 +206,15 @@ Deno.serve(async (req) => {
     const orgId = employee.organization_id;
     console.log('Processing import for organization:', orgId);
 
-    // Get organization settings
-    const { data: settings, error: settingsError } = await supabaseClient
-      .from('organization_settings')
-      .select('sapience_hcm_url, sapience_hcm_username, sapience_hcm_password')
-      .eq('organization_id', orgId)
-      .single();
-
-    console.log('Settings retrieved:', { 
-      hasUrl: !!settings?.sapience_hcm_url,
-      hasUsername: !!settings?.sapience_hcm_username,
-      hasPassword: !!settings?.sapience_hcm_password
-    });
-
-    if (settingsError || !settings) {
-      console.error('Failed to retrieve organization settings:', settingsError);
-      throw new Error('Failed to retrieve organization settings');
-    }
-
-    if (!settings.sapience_hcm_url || !settings.sapience_hcm_username || !settings.sapience_hcm_password) {
-      console.error('Missing Sapience HCM configuration');
-      throw new Error('Sapience HCM not configured. Please go to Organization Settings and enter your Sapience HCM URL, username, and password, then save the settings before importing employee data.');
-    }
-
-    // Get valid token
-    console.log('Getting valid token...');
-    const validToken = await getValidToken(supabaseClient, orgId);
+    // Get a valid token (existing or refreshed)
+    const validToken = await refreshTokenIfNeeded(supabaseClient, orgId);
     if (!validToken) {
-      console.error('Failed to obtain valid Sapience HCM token');
       throw new Error('Failed to obtain valid Sapience HCM token');
     }
     console.log('Valid token obtained');
 
-    // Fetch employees from Sapience HCM
-    console.log('Fetching employees from Sapience HCM...');
-    const sapienceEmployees = await fetchSapienceEmployees(settings.sapience_hcm_url, validToken);
+    // Fetch employees from Sapience HCM mock endpoint
+    const sapienceEmployees = await fetchSapienceEmployees(validToken);
     console.log(`Fetched ${sapienceEmployees.length} employees from Sapience HCM`);
     
     if (sapienceEmployees.length === 0) {
@@ -298,7 +248,7 @@ Deno.serve(async (req) => {
         .select('id')
         .eq('email', sapienceEmp.Email)
         .eq('organization_id', orgId)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         skipped.push({
@@ -329,23 +279,28 @@ Deno.serve(async (req) => {
       imported = insertedEmployees?.length || 0;
     }
 
-    return new Response(JSON.stringify({
+    const result = {
       success: true,
       message: `Successfully imported ${imported} employees from Sapience HCM`,
       imported,
       skipped: skipped.length,
       skippedDetails: skipped
-    }), {
+    };
+
+    console.log('Import completed:', result);
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in import-sapience-employees function:', error);
-    console.error('Error stack:', error.stack);
-    return new Response(JSON.stringify({
+    const errorResponse = {
       success: false,
-      error: error.message
-    }), {
+      error: error.message || 'Unknown error occurred'
+    };
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
