@@ -320,11 +320,20 @@ export default function OrganizationSettings() {
                   placeholder="Enter password"
                 />
               </div>
-              <div className="flex items-end">
+              <div>
+                <Label>Authentication Token</Label>
+                <Input 
+                  value={settings?.sapience_hcm_token ?? ''} 
+                  readOnly
+                  placeholder="Token will appear here after successful connection test"
+                  className="bg-muted"
+                />
+              </div>
+              <div className="flex items-end md:col-span-2">
                 <Button 
                   onClick={testSapienceConnection} 
                   disabled={testingConnection || !settings?.sapience_hcm_url || !settings?.sapience_hcm_username || !settings?.sapience_hcm_password}
-                  className="w-full"
+                  className="w-full md:w-auto"
                 >
                   {testingConnection ? 'Testing Connection...' : 'Test Connection'}
                 </Button>
