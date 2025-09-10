@@ -192,7 +192,17 @@ async function refreshTokenIfNeeded(supabase: any, orgId: string): Promise<strin
 
 function mapSapienceToSupabase(sapienceEmployee: any, orgId: string) {
   const email = sapienceEmployee.primaryContact?.email || sapienceEmployee.Email;
-  const name = sapienceEmployee.fullNameOnCard || `${sapienceEmployee.FirstName || ''} ${sapienceEmployee.LastName || ''}`.trim();
+  
+  // Build name from fullNameOnCard or concatenate firstName, middleName, lastName
+  let name = sapienceEmployee.fullNameOnCard;
+  if (!name) {
+    const nameParts = [
+      sapienceEmployee.firstName,
+      sapienceEmployee.middleName,
+      sapienceEmployee.lastName
+    ].filter(part => part && part.trim()); // Filter out null/undefined/empty parts
+    name = nameParts.join(' ').trim();
+  }
   
   return {
     name,
@@ -299,11 +309,29 @@ Deno.serve(async (req) => {
     const skipped = [];
 
     for (const sapienceEmp of sapienceEmployees) {
-      // Validate required fields using the correct field paths
+      // Validate required fields - skip employees without email
       const email = sapienceEmp.primaryContact?.email || sapienceEmp.Email;
-      const name = sapienceEmp.fullNameOnCard || `${sapienceEmp.FirstName || ''} ${sapienceEmp.LastName || ''}`.trim();
       
-      if (!email || !name) {
+      if (!email) {
+        skipped.push({
+          id: sapienceEmp.Id,
+          reason: 'Missing email address (primaryContact.email is null)'
+        });
+        continue;
+      }
+      
+      // Build name from available fields
+      let name = sapienceEmp.fullNameOnCard;
+      if (!name) {
+        const nameParts = [
+          sapienceEmp.firstName,
+          sapienceEmp.middleName,
+          sapienceEmp.lastName
+        ].filter(part => part && part.trim());
+        name = nameParts.join(' ').trim();
+      }
+      
+      if (!name) {
         skipped.push({
           id: sapienceEmp.Id,
           email,
