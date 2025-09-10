@@ -191,10 +191,21 @@ async function refreshTokenIfNeeded(supabase: any, orgId: string): Promise<strin
 }
 
 function mapSapienceToSupabase(sapienceEmployee: any, orgId: string) {
+  const email = sapienceEmployee.primaryContact?.email || sapienceEmployee.Email;
+  const name = sapienceEmployee.fullNameOnCard || `${sapienceEmployee.FirstName || ''} ${sapienceEmployee.LastName || ''}`.trim();
+  
   return {
-    name: sapienceEmployee.fullNameOnCard || `${sapienceEmployee.FirstName || ''} ${sapienceEmployee.LastName || ''}`.trim(),
-    email: sapienceEmployee.primaryContact?.email || sapienceEmployee.Email,
+    name,
+    email,
     organization_id: orgId,
+    employee_code: sapienceEmployee.EmployeeCode || null,
+    job_title: sapienceEmployee.JobTitle || null,
+    phone_number: sapienceEmployee.PhoneNumber || sapienceEmployee.primaryContact?.phoneNumber || null,
+    hire_date: sapienceEmployee.HireDate ? new Date(sapienceEmployee.HireDate).toISOString().split('T')[0] : null,
+    status: sapienceEmployee.Status || null,
+    department_name: sapienceEmployee.DepartmentName || null,
+    full_name_on_card: sapienceEmployee.fullNameOnCard || null,
+    sapience_employee_id: sapienceEmployee.Id || null,
   };
 }
 
@@ -295,16 +306,17 @@ Deno.serve(async (req) => {
       if (!email || !name) {
         skipped.push({
           id: sapienceEmp.Id,
+          email,
           reason: 'Missing required fields (email or name)'
         });
         continue;
       }
 
-      // Check if employee already exists
+      // Check if employee already exists by email or sapience_employee_id
       const { data: existing } = await supabaseClient
         .from('employees')
         .select('id')
-        .eq('email', sapienceEmp.Email)
+        .or(`email.eq.${email},sapience_employee_id.eq.${sapienceEmp.Id}`)
         .eq('organization_id', orgId)
         .maybeSingle();
 

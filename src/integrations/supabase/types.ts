@@ -465,30 +465,54 @@ export type Database = {
           auth_user_id: string | null
           created_at: string | null
           department_id: string | null
+          department_name: string | null
           email: string
+          employee_code: string | null
+          full_name_on_card: string | null
+          hire_date: string | null
           id: string
+          job_title: string | null
           name: string
           organization_id: string
+          phone_number: string | null
+          sapience_employee_id: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
           auth_user_id?: string | null
           created_at?: string | null
           department_id?: string | null
+          department_name?: string | null
           email: string
+          employee_code?: string | null
+          full_name_on_card?: string | null
+          hire_date?: string | null
           id?: string
+          job_title?: string | null
           name: string
           organization_id: string
+          phone_number?: string | null
+          sapience_employee_id?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
           auth_user_id?: string | null
           created_at?: string | null
           department_id?: string | null
+          department_name?: string | null
           email?: string
+          employee_code?: string | null
+          full_name_on_card?: string | null
+          hire_date?: string | null
           id?: string
+          job_title?: string | null
           name?: string
           organization_id?: string
+          phone_number?: string | null
+          sapience_employee_id?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: [
