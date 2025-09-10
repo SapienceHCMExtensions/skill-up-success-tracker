@@ -69,9 +69,27 @@ async function fetchSapienceEmployees(token: string, sapienceHcmUrl: string): Pr
     }
     
     console.log('Parsed API response:', responseData);
+    console.log('Response Success field:', responseData.Success);
+    console.log('Response Message field:', responseData.Message);
+    console.log('Response Data field:', responseData.Data);
     
-    if (!responseData.Success) {
-      throw new Error(`API returned error: ${responseData.Message}`);
+    // Check if the response has the expected structure
+    if (responseData.hasOwnProperty('Success')) {
+      if (!responseData.Success) {
+        const errorMessage = responseData.Message || 'Unknown API error';
+        console.error('API returned Success=false with message:', errorMessage);
+        throw new Error(`API returned error: ${errorMessage}`);
+      }
+    } else {
+      // If there's no Success field, assume it's a direct data response
+      console.log('No Success field found, treating as direct data response');
+      if (Array.isArray(responseData)) {
+        console.log(`Direct array response with ${responseData.length} items`);
+        return responseData as SapienceEmployee[];
+      } else if (responseData.Data && Array.isArray(responseData.Data)) {
+        console.log(`Response has Data field with ${responseData.Data.length} items`);
+        return responseData.Data;
+      }
     }
 
     console.log(`Successfully fetched ${responseData.Data?.length || 0} employees`);
