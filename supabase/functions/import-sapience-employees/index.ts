@@ -27,9 +27,9 @@ interface SapienceEmployeeResponse {
 }
 
 async function fetchSapienceEmployees(token: string): Promise<SapienceEmployee[]> {
-  // Using the mock endpoint as specified by the user
-  const employeesUrl = 'https://stoplight.io/mocks/cartelit/sapience-hcm/12673758/api/EmployeeManagement/Employee/GetEmployeeFullDetails/';
-  console.log('Fetching employees from mock endpoint:', employeesUrl);
+  // Using the correct Sapience HCM endpoint
+  const employeesUrl = 'https://demo.sapiencehcm.com/api/EmployeeManagement/Employee/GetEmployeeFullDetails';
+  console.log('Fetching employees from Sapience HCM endpoint:', employeesUrl);
   console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
 
   try {
